@@ -132,6 +132,9 @@ public class OrderManeger {
 
     }
 
+    //commit test 1
+
+
     //TODO 카테고리 선택
     private static int getCategoryFromUser() {
         Scanner sc = new Scanner(System.in);
