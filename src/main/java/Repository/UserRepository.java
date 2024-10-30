@@ -33,4 +33,10 @@ public class UserRepository {
         return users.values();
     }
 
+    public void updateUser(User user) {
+        if (users.containsKey(user.getUserId())) {
+            users.put(user.getUserId(), user);
+        }
+    }
+
 }

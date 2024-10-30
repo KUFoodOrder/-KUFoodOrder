@@ -20,7 +20,9 @@ public class Store {
         this.storeCategory = storeCategory;
         this.storeName = storeName;
     }
-
+    public void setStoreLocation(Position storeLocation) {
+        this.storeLocation = storeLocation;
+    }
     public void setStoreMenuList(List<Food> storeMenuList) {
         this.storeMenuList = storeMenuList;
     }
