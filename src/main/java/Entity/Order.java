@@ -1,19 +1,21 @@
 package Entity;
 
+import java.util.List;
+
 public class Order {
 
     private String orderTime; //주문시간
     private String orderId; //주문정보id
     private User user; //주문자정보
-    private Food food; //주문음식
-    private int quantity; //주문한 갯수
+    private List<Food> foods; //주문음식리스트
+    private List<Integer> quantitys; //주문한음식당 주문한양 리스트
 
-    public Order(String orderTime, String orderId, User user, Food food, int quantity) {
+    public Order(String orderTime, String orderId, User user, List<Food> foods, List<Integer> quantitys) {
         this.orderTime = orderTime;
         this.orderId = orderId;
         this.user = user;
-        this.food = food;
-        this.quantity = quantity;
+        this.foods = foods;
+        this.quantitys = quantitys;
     }
 
     public String getOrderId() {
@@ -28,11 +30,11 @@ public class Order {
         return user;
     }
 
-    public Food getFood() {
-        return food;
+    public List<Food> getFoods() {
+        return foods;
     }
 
-    public int getQuantity() {
-        return quantity;
+    public List<Integer> getQuantitys() {
+        return quantitys;
     }
 }

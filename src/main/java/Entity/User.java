@@ -265,13 +265,6 @@ public class User {
 //        }
     }
 
-    public HashMap<Food, Integer> getUserOrderMap() {
-        return userOrderMap;
-    }
-
-    public void setUserOrderMap(HashMap<Food, Integer> userOrderMap) {
-        this.userOrderMap = userOrderMap;
-    }
     //TODO 가게 관리자가 가게에 대한 정보(메뉴, 가격, 위치 등)를 직접 추가/삭제
 
 }

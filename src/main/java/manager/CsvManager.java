@@ -315,11 +315,33 @@ public class CsvManager {
                 }
                 String[] array = line.split(",");
 
+
+                String orderTime = array[0];
+                String orderId = array[1];
                 User user = userRepository.findUserById(array[2]);
-                Food food = foodRepository.findFoodByName(array[3]);
 
-                Order order = new Order(array[0],array[1],user,food,Integer.parseInt(array[4]));
+                // 음식과 수량 리스트 초기화
+                List<Food> foods = new ArrayList<>();
+                List<Integer> quantities = new ArrayList<>();
 
+                // 음식과 수량 정보를 ":"로 분리하여 처리
+                for (int i = 3; i < array.length; i++) {  // 3번 인덱스부터 끝까지 반복
+                    String[] foodQuantityPair = array[i].split(":");
+                    if (foodQuantityPair.length == 2) {
+                        Food food = foodRepository.findFoodByName(foodQuantityPair[0]);
+                        int quantity = Integer.parseInt(foodQuantityPair[1]);
+
+                        if (food != null) {
+                            foods.add(food);
+                            quantities.add(quantity);
+                        } else {
+                            System.out.println("음식 '" + foodQuantityPair[0] + "'을 찾을 수 없습니다.");
+                        }
+                    }
+                }
+
+                // Order 객체 생성 및 저장
+                Order order = new Order(orderTime, orderId, user, foods, quantities);
                 orderRepository.addOrder(order);
 
             }
@@ -342,9 +364,18 @@ public class CsvManager {
                 StringBuilder line = new StringBuilder();
                 line.append(order.getOrderTime()).append(",")          // 주문시간
                         .append(order.getOrderId()).append(",")        //주문내역id
-                        .append(order.getUser().getUserId()).append(",")        // 사용자 id
-                        .append(order.getFood().getFoodName()).append(",")     // 음식 이름
-                        .append(order.getQuantity());                      // 주문 수량
+                        .append(order.getUser().getUserId()).append(",");      // 사용자 id
+
+                // 음식과 수량 리스트를 ":"로 구분하여 추가
+                List<Food> foods = order.getFoods();
+                List<Integer> quantities = order.getQuantitys();
+
+                for (int i = 0; i < foods.size(); i++) {
+                    line.append(foods.get(i).getFoodName()).append(":").append(quantities.get(i));
+                    if (i < foods.size() - 1) {
+                        line.append(",");  // 각 음식-수량 쌍 사이에 콤마 추가
+                    }
+                }
 
                 // 파일에 한 줄씩 추가
                 writer.write(line.toString());
