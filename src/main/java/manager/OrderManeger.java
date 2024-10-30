@@ -4,10 +4,8 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
+
 import Entity.*;
 import Repository.FoodRepository;
 import Repository.OrderRepository;
@@ -24,6 +22,7 @@ public class OrderManeger {
     static List<List<String>> List_Store = new ArrayList<>();   //카테고리 고른 후 해당 카테고리 가게 저장. ex) [[1, 건국쌈밥], [1, 건국밥상]]
     static List<String> List_Menu = new ArrayList<>();    //가게 고른 후 해당 가게의 메뉴 리스트 ex) [짬뽕, 짜장면, 볶음밥]
     static List<List<String>> Confirmed_order = new ArrayList<>();     //최종 주문 확정 리스트. orderData.csv에 삽입할 정보들
+
 
     public static void getOrderFromUser(String time, String id) {
         Confirmed_order.clear();
@@ -59,6 +58,8 @@ public class OrderManeger {
         //주문서 출력
         Print_Bill(Confirmed_order);
 
+
+        /* TQ
         //순번이랑 음식, 수량 리스트 제작 / user id 제작
         String cur_max = check_max();
         List<Food> foodList = new ArrayList<>(); // Food 객체를 저장할 리스트
@@ -76,10 +77,12 @@ public class OrderManeger {
                 System.out.println("음식 '" + menuName + "'을 찾을 수 없습니다.");
             }
         }
-        UserRepository userRepository = UserRepository.getInstance();
-        System.out.println("id = " + id);
+        CsvManager csvManager = new CsvManager();
+        UserRepository userRepository = csvManager.readUserCsv();
+        //System.out.println("id = " + id);
         User user_id = userRepository.findUserById(id);
-        System.out.println("User = " + user_id);
+        //System.out.println("User = " + user_id);
+
         //주문 확정할건지 체크 확정 시 1, 취소 시 0 리턴
         if (1 == getConfirmFromUser()) {
             OrderRepository orderRepository = csvManager.readOrderCsv();
@@ -95,15 +98,17 @@ public class OrderManeger {
             System.out.println(newOrder.getQuantitys());
 
 
-
             // 새로운 주문을 파일에 추가
-            //csvManager.writeOrderCsv(orderRepository);
+            csvManager.writeOrderCsv(orderRepository);
 
             System.out.println("주문이 완료되었습니다. 엔터 키를 누르면 고객 메뉴로 돌아갑니다.");
         } else {
             System.out.println("주문이 완료되지 않았습니다. 엔터 키를 누르면 고객 메뉴로 돌아갑니다.");
         }
+        */
 
+
+        //기존 userData.csv 구현방식
 //        //주문 확정할건지 체크 확정 시 1, 취소 시 0 리턴
 //        if (1 == getConfirmFromUser()) {
 //            //지금 orderData.csv에 max 순번 찾고 다음 순번으로 리턴
@@ -122,18 +127,45 @@ public class OrderManeger {
 //        else {
 //            System.out.println("주문이 완료되지 않았습니다. 엔터 키를 누르면 고객 메뉴로 돌아갑니다.");
 //        }
+
+        //새로운 userData.csv 구현방식
+        // 주문 확정할건지 체크 확정 시 1, 취소 시 0 리턴
+        if (1 == getConfirmFromUser()) {
+            // 지금 orderData.csv에 max 순번 찾고 다음 순번으로 리턴
+            String cur_max = check_max();
+
+            // "메뉴:수량" 형식으로 메뉴와 수량을 병합
+            StringBuilder menuItems = new StringBuilder();
+            for (int i = 0; i < Confirmed_order.size(); i++) {
+                List<String> row = Confirmed_order.get(i);
+                String menuItem = row.get(2) + ":" + row.get(3); // 메뉴:수량
+                menuItems.append(menuItem);
+
+                // 메뉴 구분을 위한 콤마 추가 (마지막 항목 뒤에는 콤마를 추가하지 않음)
+                if (i < Confirmed_order.size() - 1) {
+                    menuItems.append(",");
+                }
+            }
+
+            // 시간, 순번, id와 병합된 메뉴:수량 리스트를 한 줄로 작성
+            String line = String.join(",", time, cur_max, id, menuItems.toString());
+
+            try (FileWriter writer = new FileWriter("src/main/java/dataInfo/orderData.csv", true)) {
+                writer.write(line + "\n"); // 파일에 한 줄로 추가
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            System.out.println("주문이 완료되었습니다. 엔터 키를 누르면 고객 메뉴로 돌아갑니다.");
+        } else {
+            System.out.println("주문이 완료되지 않았습니다. 엔터 키를 누르면 고객 메뉴로 돌아갑니다.");
+        }
+
         Scanner sc = new Scanner(System.in);
         sc.nextLine();  // 사용자가 Enter 키를 누를 때까지 대기
         sc.close();
 
-
-
-
-
     }
-
-    //commit test 1
-
 
     //TODO 카테고리 선택
     private static int getCategoryFromUser() {
@@ -149,7 +181,6 @@ public class OrderManeger {
             }
         }
     }
-
     //카테고리 출력
     private static void Print_Category() {
         System.out.println("----------고객 카테고리 입장----------");
@@ -174,7 +205,6 @@ public class OrderManeger {
             }
         }
     }
-
     //가게 출력
     private static void Print_Store(int category) {        //같은 가게 중복이 없어서 storeData.csv 사용.
         StoreRepository storeRepository = csvManager.readStoreCsv();
@@ -216,7 +246,6 @@ public class OrderManeger {
             }
         }
     }
-
     // 메뉴 출력
     private static void Print_Menu(int x) {
         System.out.println("----------메뉴 선택----------");
@@ -263,7 +292,6 @@ public class OrderManeger {
             }
         }
     }
-
     private static void pushToConfirmed(int Category_user_selected, int Store_user_selected, int Menu_user_selected, int Quantity, int keep_order) {
         List<String> add_ordered_list = new ArrayList<>();
         add_ordered_list.add(Integer.toString(Category_user_selected));         //카테고리 번호
@@ -278,7 +306,6 @@ public class OrderManeger {
         else System.out.print("일식 카테고리의 ");
         System.out.println(Confirmed_order.get(keep_order-1).get(1) + " 가게의 " + Confirmed_order.get(keep_order-1).get(2) + "을 " + Confirmed_order.get(keep_order-1).get(3) + "개 선택하셨습니다.");
     }
-
     //메뉴 비용 확인
     private static String check_cost(String temp_store, String temp_menu) {
         FoodRepository foodRepository = csvManager.readFoodCsv();
@@ -292,7 +319,6 @@ public class OrderManeger {
             return "가격을 찾을 수 없습니다.";
         }
     }
-
 
     //TODO 추가 주문 여부 확인
     private static int Keep_Order_Check(int keep_order) {
@@ -314,8 +340,7 @@ public class OrderManeger {
         }
     }
 
-
-    //TODO 주문내역 확인 출력
+    //TODO 현재까지 주문서 출력 후 주문 확정 받기!
     private static void Print_Bill(List<List<String>> Bill){
             int cost_sum=0;
             System.out.println("<주문서>");
@@ -346,7 +371,6 @@ public class OrderManeger {
             }
         }
     }
-
     private static String check_max() {
         String filePath = "src/main/java/dataInfo/orderData.csv";
         int maxIndex = Integer.MIN_VALUE;
@@ -370,6 +394,123 @@ public class OrderManeger {
         max = String.format("%04d", number);
         return max;
     }
+
+    //TODO 주문내역 확인 출력
+    public static void check_order_history_from_User(String inputId) {
+        String orderFilePath = "src/main/java/dataInfo/orderData.csv";
+        String foodFilePath = "src/main/java/dataInfo/foodData.csv";
+
+        // 음식 데이터 읽기 (메뉴명과 가격을 매핑하는 해시맵 생성)
+        Map<String, Integer> foodPrices = new HashMap<>();
+        try (BufferedReader foodReader = new BufferedReader(new FileReader(foodFilePath))) {
+            String line;
+            while ((line = foodReader.readLine()) != null) {
+                String[] columns = line.split(",");
+                String foodName = columns[3];
+                int price = Integer.parseInt(columns[4]);
+                foodPrices.put(foodName, price);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // 주문 데이터 읽기 및 해당 아이디의 주문 내역 찾기
+        boolean orderFound = false;
+        try (BufferedReader orderReader = new BufferedReader(new FileReader(orderFilePath))) {
+            String line;
+            while ((line = orderReader.readLine()) != null) {
+                String[] columns = line.split(",");
+                String userId = columns[2];
+
+                // 아이디가 일치하는 경우 주문 내역 출력
+                if (userId.equals(inputId)) {
+                    orderFound = true;
+                    int totalPrice = 0;
+
+                    System.out.println("아이디: " + userId);
+                    System.out.println("주문 내역:");
+
+                    for (int i = 3; i < columns.length; i++) {
+                        String[] item = columns[i].split(":");
+                        String itemName = item[0];
+                        int quantity = Integer.parseInt(item[1]);
+                        int price = foodPrices.getOrDefault(itemName, 0); // 가격을 찾지 못할 경우 0으로 설정
+                        totalPrice += price * quantity;
+
+                        System.out.println("  " + itemName + " " + quantity + "개 - " + (price * quantity) + "원");
+                    }
+                    System.out.println("합계: " + totalPrice + "원");
+                    System.out.println();
+                }
+            }
+
+            if (!orderFound) {
+                System.out.println("해당 아이디의 주문 내역이 없습니다.");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public static void check_order_history_from_Admin() {
+        String orderFilePath = "src/main/java/dataInfo/orderData.csv";
+        String foodFilePath = "src/main/java/dataInfo/foodData.csv";
+        Map<String, Integer> foodPrices = new HashMap<>();
+        try (BufferedReader foodReader = new BufferedReader(new FileReader(foodFilePath))) {
+            String line;
+            while ((line = foodReader.readLine()) != null) {
+                String[] columns = line.split(",");
+                String foodName = columns[3];
+                int price = Integer.parseInt(columns[4]);
+                foodPrices.put(foodName, price);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // 주문 데이터 읽기
+        List<String> ids = new ArrayList<>();
+        List<List<String[]>> items = new ArrayList<>();
+        try (BufferedReader orderReader = new BufferedReader(new FileReader(orderFilePath))) {
+            String line;
+            while ((line = orderReader.readLine()) != null) {
+                String[] columns = line.split(",");
+                ids.add(columns[2]); // ID 저장
+
+                // 메뉴와 수량을 이중 배열로 저장
+                List<String[]> itemList = new ArrayList<>();
+                for (int i = 3; i < columns.length; i++) {
+                    itemList.add(columns[i].split(":"));
+                }
+                items.add(itemList);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // 결과 출력
+        for (int i = 0; i < ids.size(); i++) {
+            String userId = ids.get(i);
+            List<String[]> userItems = items.get(i);
+            int totalPrice = 0;
+
+            System.out.println((i + 1) + ". " + userId);
+            System.out.println("  ➤ 주문내역:");
+
+            for (String[] item : userItems) {
+                String itemName = item[0];
+                int quantity = Integer.parseInt(item[1]);
+                int price = foodPrices.getOrDefault(itemName, 0); // 가격을 찾지 못할 경우 0으로 설정
+                totalPrice += price * quantity;
+
+                System.out.println("    " + itemName + " " + quantity + "개 - " + (price * quantity) + "원");
+            }
+            System.out.println("  합계: " + totalPrice + "원");
+            System.out.println();
+        }
+    }
+
 
 
 }

@@ -59,6 +59,8 @@ public class CsvManager {
                         new Position(Integer.parseInt(array[3]), Integer.parseInt(array[4])));
 
                 userRepository.addUser(user);  // 사용자 추가
+
+                System.out.println("Added User: " + user.getUserId()); // 디버깅용
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -91,11 +93,11 @@ public class CsvManager {
                 String[] menuItems = array[4].split(":");
                 List<Food> menuList = new ArrayList<>();
                 for (String itemName : menuItems) {
-                    Food food = foodRepository.findFoodByName(itemName);  // 음식 이름으로 Food 객체 검색
+                    Food food = new Food(itemName);  // 음식 이름으로 Food 객체 검색
                     if (food != null) {
                         menuList.add(food);  // 메뉴 리스트에 Food 객체 추가
                     } else {
-                        System.out.println("음식 이름 '" + itemName + "'을 찾을 수 없습니다.");
+                        //System.out.println("음식 이름 '" + itemName + "'을 찾을 수 없습니다.");
                     }
                 }
                 store.setStoreMenuList(menuList);  // Store 객체에 메뉴 리스트 추가
@@ -388,7 +390,7 @@ public class CsvManager {
     }
 
 
- //싱크맞추는부분
+    //싱크맞추는부분
 //    public void timeSynchronize(String time) {
 //        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
 //        LocalDateTime givenTime = LocalDateTime.parse(time, formatter);
@@ -426,6 +428,6 @@ public class CsvManager {
 //        }
 //
 //        userCsvTimeSynchronize(resetSeats);
-  //  }
+    //  }
 
 }

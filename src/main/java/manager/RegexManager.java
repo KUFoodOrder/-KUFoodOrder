@@ -9,6 +9,36 @@ import java.util.regex.Pattern;
 
 public class RegexManager {
 
+    //승효 추가 본
+    public boolean checkMenu(String input, int x) {     //1부터 x까지 정규식 패턴 검증 (x>=1 && x<=10
+        String pattern = "";
+        if (x >= 1 && x < 10) {
+            pattern = "^[1-" + x + "]$";
+        } else if (x == 10) {
+            pattern = "^(10|[1-9])$";
+        }
+
+        // 입력 값이 정규식 패턴과 일치하는지 확인
+        if (Pattern.matches(pattern, input)) {
+            return true;
+        } else {
+            System.out.println("잘못된 입력입니다. 1부터 " + x + " 사이의 정수를 입력해야 합니다.");
+            return false;
+        }
+    }
+
+    public boolean checkYN(String input) {
+        String pattern = "^[YN]$";
+
+        if (Pattern.matches(pattern, input)) {
+            return true;
+        } else {
+            System.out.println("잘못된 입력입니다. Y 또는 N만 입력할 수 있습니다.");
+            return false;
+        }
+    }
+    //승효 추가 본
+
     public boolean checkThreeMenu(String input) {
         String pattern = "^[1-3]$";
 
