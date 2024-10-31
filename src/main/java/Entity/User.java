@@ -167,6 +167,10 @@ public class User {
     }
 
 
+    public void setUserLocation(Position userLocation) {
+        this.userLocation = userLocation;
+    }
+
     public void user_Login(String time) {
         int x = 0, y = 0;
         Scanner sc = new Scanner(System.in);
@@ -204,10 +208,11 @@ public class User {
 
                         x = Integer.parseInt(coordinates[0].trim());
                         y = Integer.parseInt(coordinates[1].trim());
-                        this.userLocation = new Position(x,y);
-                        userRepository.updateUser(user);
+
+                        user.setUserLocation(new Position(x,y));
                         csvManager.writeUserCsv(userRepository);
                         break;
+
                     } catch (NumberFormatException e) {
                         System.out.println("유효한 정수를 입력해주세요.");
                     } catch (IllegalArgumentException e) {

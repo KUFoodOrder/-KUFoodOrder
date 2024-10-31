@@ -56,7 +56,8 @@ public class MenuManager {
                 switch (menuNumber) {
                     case 1:
                         System.out.println("회원가입 메뉴로 이동합니다.");
-                        user.register();
+                        //user.register();
+                        user.admin_SetInformation();
                         break;
                     case 2:
                         System.out.println("로그인 메뉴로 이동합니다.");
@@ -69,6 +70,7 @@ public class MenuManager {
                     case 4:
                         System.out.println("프로그램을 종료합니다.\n");
                         return;
+
                 }
             }
 
