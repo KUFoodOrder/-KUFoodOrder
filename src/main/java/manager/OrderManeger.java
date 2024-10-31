@@ -155,7 +155,6 @@ public class OrderManeger {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
             System.out.println("주문이 완료되었습니다. 엔터 키를 누르면 고객 메뉴로 돌아갑니다.");
         } else {
             System.out.println("주문이 완료되지 않았습니다. 엔터 키를 누르면 고객 메뉴로 돌아갑니다.");
