@@ -23,6 +23,9 @@ public class Food {
     public String getFoodName() {
         return foodName;
     }
+    public void setFoodPrice(int foodPrice) {
+        this.foodPrice = foodPrice;
+    }
 
 
     public Store getStore() {

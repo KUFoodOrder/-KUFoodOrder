@@ -29,5 +29,9 @@ public class StoreRepository {
     public Collection<Store> findAll() {
         return stores.values();
     }
+    public Store findStoreName(String storename) {
+        return stores.get(storename);
+    }
+
 
 }

@@ -35,4 +35,8 @@ public class FoodRepository {
     public Collection< Food> findAll() {
         return foods.values();
     }
+    public void removeFood(Food food) {
+        // Food 리스트에서 해당 음식을 제거
+        foods.remove(food.getFoodName());
+    }
 }
