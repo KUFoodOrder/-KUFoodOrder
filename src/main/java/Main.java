@@ -11,7 +11,7 @@ public class Main {
         //OrderManeger.check_order_history_from_Admin();
         OrderManeger.check_order_history_from_User(id);
 
-        //MenuManager.showMenu();
+        MenuManager.showMenu();
         System.out.println();
     }
 }
