@@ -235,7 +235,7 @@ public class User {
         Scanner sc = new Scanner(System.in);
         String uid;
         String upwd;
-        System.out.println("사용자 로그인 메뉴로 돌아가려면 'q'를 누르세요.\n");
+        System.out.println("관리자 로그인 메뉴로 돌아가려면 'q'를 누르세요.\n");
         while (true) {
             System.out.println("아이디를 입력해주세요.");
             System.out.print("> ");
@@ -258,6 +258,7 @@ public class User {
                 }
             }
             System.out.println("아이디 또는 비밀번호가 일치하지 않습니다."); //로그인 실패!
+            return;
         }
     }
 
