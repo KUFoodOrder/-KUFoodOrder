@@ -23,6 +23,38 @@ public class OrderManeger {
     static List<String> List_Menu = new ArrayList<>();    //가게 고른 후 해당 가게의 메뉴 리스트 ex) [짬뽕, 짜장면, 볶음밥]
     static List<List<String>> Confirmed_order = new ArrayList<>();     //최종 주문 확정 리스트. orderData.csv에 삽입할 정보들
 
+    static Scanner sc = new Scanner(System.in);
+    public static int Print_User_Main_Menu(String time, String id) {
+
+        int userMainMenu_user_selected=0;
+        while (true) {
+            System.out.println("----------고객 메인 메뉴----------");
+            System.out.println("1. 카테고리 선택");
+            System.out.println("2. 주문내역 확인");
+            System.out.println("3. 로그아웃");
+            System.out.println("--------------------------------");
+            System.out.println("고객 메인 메뉴 번호를 입력해주세요.");
+            System.out.print(">");
+            String input = sc.nextLine();
+
+            if (regexManager.checkMenu(input, 3)) {
+                userMainMenu_user_selected = Integer.parseInt(input);
+                System.out.println(userMainMenu_user_selected + "번을 선택하셨습니다.");
+                break;
+            }
+        }
+        if (userMainMenu_user_selected == 1) {
+            getOrderFromUser(time, id);
+            return 1;
+        }
+        else if (userMainMenu_user_selected == 2) {
+            check_order_history_from_User(id);
+            return 2;
+        }
+        else System.out.println("로그아웃합니다"); return 3;
+
+    }
+
 
     public static void getOrderFromUser(String time, String id) {
         Confirmed_order.clear();
@@ -162,7 +194,6 @@ public class OrderManeger {
 
         Scanner sc = new Scanner(System.in);
         sc.nextLine();  // 사용자가 Enter 키를 누를 때까지 대기
-        sc.close();
 
     }
 
