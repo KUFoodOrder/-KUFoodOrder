@@ -1,5 +1,6 @@
 package manager;
 
+import Entity.*;
 import Repository.FoodRepository;
 import Repository.OrderRepository;
 import Repository.StoreRepository;
@@ -12,16 +13,13 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
 
-import Entity.*;
-
-import static java.nio.file.Files.newBufferedReader;
 
 public class CsvManager {
 
-    final String userCsvFileName = "src/main/java/dataInfo/userData.csv";
-    final String foodCsvFileName = "src/main/java/dataInfo/foodData.csv";
-    final String orderCsvFileName = "src/main/java/dataInfo/orderData.csv";
-    final String storeCsvFileName = "src/main/java/dataInfo/storeData.csv";
+    final String userCsvFileName = "/userData.csv";
+    final String foodCsvFileName = "/foodData.csv";
+    final String orderCsvFileName = "/orderData.csv";
+    final String storeCsvFileName = "/storeData.csv";
 
     UserRepository userRepository = UserRepository.getInstance();
     FoodRepository foodRepository = FoodRepository.getInstance();
@@ -29,24 +27,30 @@ public class CsvManager {
     StoreRepository storeRepository = StoreRepository.getInstance();
 
 
+
     public void writeUserCsv(UserRepository userRepository) {
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(userCsvFileName))) {
+        // 사용자 홈 디렉토리에 저장
+        String homeDir = System.getProperty("user.home");
+        Path path = Paths.get(homeDir, "userData.csv");
+
+        try (BufferedWriter writer = Files.newBufferedWriter(path)) {
             for (User u : userRepository.findAll()) {
-                // 사용자 정보를 CSV 형식으로 작성
-                writer.write(u.getUserId() + ","
-                        + u.getUserPassword() + ","
-                        + u.getUserName() + ","
-                        + u.getUserLocation().getX() + "," // 위치 X
-                        + u.getUserLocation().getY() + "\n"); // 위치 Y
+                writer.write(u.getUserId() + "," + u.getUserPassword() + "," + u.getUserName() + "," +
+                        u.getUserLocation().getX() + "," + u.getUserLocation().getY() + "\n");
             }
         } catch (IOException e) {
             e.printStackTrace();
+            System.out.println("파일 쓰기 중 오류가 발생했습니다.");
         }
     }
 
+
     public UserRepository readUserCsv() {
-        try (BufferedReader br = Files.newBufferedReader(Paths.get(userCsvFileName))) {
+
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                getClass().getResourceAsStream(userCsvFileName))))
+        {
             String line;
 
             while ((line = br.readLine()) != null) {
@@ -72,10 +76,12 @@ public class CsvManager {
         return userRepository;
     }
 
+
     public StoreRepository readStoreCsv() {
 
         StoreRepository storeRepository =StoreRepository.getInstance();
-        try (BufferedReader br = Files.newBufferedReader(Paths.get(storeCsvFileName))) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                getClass().getResourceAsStream(storeCsvFileName)))) {
             String line;
 
             while ((line = br.readLine()) != null) {
@@ -117,7 +123,12 @@ public class CsvManager {
     }
 
     public void writeStoreCsv(StoreRepository storeRepository) {
-        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(storeCsvFileName))) {
+
+        // 사용자 홈 디렉토리에 저장
+        String homeDir = System.getProperty("user.home");
+        Path path = Paths.get(homeDir, "storeData.csv");
+
+        try (BufferedWriter writer = Files.newBufferedWriter(path)) {
             for (Store store : storeRepository.findAll()) {
                 // 각 Store의 정보를 CSV 형식으로 변환
                 StringBuilder line = new StringBuilder();
@@ -198,7 +209,8 @@ public class CsvManager {
 
     public FoodRepository readFoodCsv() {
 
-        try (BufferedReader br = Files.newBufferedReader(Paths.get(foodCsvFileName))) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                getClass().getResourceAsStream(foodCsvFileName)))) {
             String line;
 
             while ((line = br.readLine()) != null) {
@@ -227,7 +239,11 @@ public class CsvManager {
     }
 
     public void writeFoodCsv(FoodRepository foodRepository) {
-        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(foodCsvFileName))) {
+        // 사용자 홈 디렉토리에 저장
+        String homeDir = System.getProperty("user.home");
+        Path path = Paths.get(homeDir, "foodData.csv");
+
+        try (BufferedWriter writer = Files.newBufferedWriter(path)){
             for (Food food : foodRepository.findAll()) {
                 // 각 Food 객체의 정보를 CSV 형식으로 변환
                 StringBuilder line = new StringBuilder();
@@ -306,7 +322,8 @@ public class CsvManager {
 
     public OrderRepository readOrderCsv() {
 
-        try (BufferedReader br = Files.newBufferedReader(Paths.get(orderCsvFileName))) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                getClass().getResourceAsStream(orderCsvFileName)))) {
             String line;
 
             while ((line = br.readLine()) != null) {
@@ -357,7 +374,11 @@ public class CsvManager {
         return orderRepository;
     }
     public void writeOrderCsv(OrderRepository orderRepository) {
-        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(orderCsvFileName))) {
+        // 사용자 홈 디렉토리에 저장
+        String homeDir = System.getProperty("user.home");
+        Path path = Paths.get(homeDir, "orderData.csv");
+
+        try (BufferedWriter writer = Files.newBufferedWriter(path)) {
             for (Order order : orderRepository.findAll()) {
 
                 // 각 Order 객체의 정보를 CSV 형식으로 변환
