@@ -59,8 +59,6 @@ public class CsvManager {
                         new Position(Integer.parseInt(array[3]), Integer.parseInt(array[4])));
 
                 userRepository.addUser(user);  // 사용자 추가
-
-                System.out.println("Added User: " + user.getUserId()); // 디버깅용
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
