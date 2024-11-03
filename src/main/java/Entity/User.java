@@ -192,6 +192,7 @@ public class User {
             System.out.print("> ");
             upwd = sc.nextLine().trim();
             if (upwd.equals("q")) {
+                uid="q";
                 return uid;
             }
 
@@ -230,7 +231,7 @@ public class User {
         }
     }
 
-    public void admin_Login(String time) {
+    public String admin_Login(String time) {
         //TODO 관리자 로그인 구현
         Scanner sc = new Scanner(System.in);
         String uid;
@@ -242,23 +243,23 @@ public class User {
             uid = sc.nextLine();
             uid = uid.trim();
             if (uid.equals("q")) {
-                return;
+                return "q";
             }
             System.out.println("비밀번호를 입력해주세요.");
             System.out.print("> ");
             upwd = sc.nextLine();
             upwd = upwd.trim();
             if (upwd.equals("q")) {
-                return;
+                return "q";
             }
             if (uid.equals("admin")) {
                 if (upwd.equals("1234")) {
                     System.out.println("로그인 성공!");
-                    return;
+                    return "";
                 }
             }
             System.out.println("아이디 또는 비밀번호가 일치하지 않습니다."); //로그인 실패!
-            return;
+            return "q";
         }
     }
 

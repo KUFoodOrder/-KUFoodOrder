@@ -61,6 +61,7 @@ public class MenuManager {
                     case 2:
                         System.out.println("로그인 메뉴로 이동합니다.");
                         String uid = user.user_Login(time);
+
                         if (uid.equals("q")) {
                             //nothing
                         }
@@ -72,10 +73,13 @@ public class MenuManager {
                         break;
                     case 3:
                         System.out.println("관리자 로그인 메뉴로 이동합니다.");
-                        user.admin_Login(time);
-
-                        while(true){
-                            if (3== OrderManeger.Print_Admin_Main_Menu(time)) break;     //관리자 메인 메뉴 출력
+                        String s = user.admin_Login(time);
+                        if (s.equals("q")) {
+                            //nothing
+                        }else{
+                            while(true){
+                                if (3== OrderManeger.Print_Admin_Main_Menu(time)) break;     //관리자 메인 메뉴 출력
+                            }
                         }
                         break;
 

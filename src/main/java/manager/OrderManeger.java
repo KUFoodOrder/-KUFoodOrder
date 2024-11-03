@@ -145,7 +145,7 @@ public class OrderManeger {
 //            //지금 orderData.csv에 max 순번 찾고 다음 순번으로 리턴
 //            String cur_max = check_max();
 //            //시간 순번 id 메뉴 수량 순으로 orderData.csv에 append
-//            try (FileWriter writer = new FileWriter("src/main/java/dataInfo/orderData.csv", true)) {
+//            try (FileWriter writer = new FileWriter("src/main/resources/orderData.csv", true)) {
 //                for (List<String> row : Confirmed_order) {
 //                    String line = String.join(",", time, cur_max, id, row.get(2), row.get(3));
 //                    writer.write(line + "\n");
@@ -181,7 +181,7 @@ public class OrderManeger {
             // 시간, 순번, id와 병합된 메뉴:수량 리스트를 한 줄로 작성
             String line = String.join(",", time, cur_max, id, menuItems.toString());
 
-            try (FileWriter writer = new FileWriter("src/main/java/dataInfo/orderData.csv", true)) {
+            try (FileWriter writer = new FileWriter("src/main/resources/orderData.csv", true)) {
                 writer.write(line + "\n"); // 파일에 한 줄로 추가
             } catch (IOException e) {
                 e.printStackTrace();
@@ -406,7 +406,7 @@ public class OrderManeger {
     }
 
     private static String check_max() {
-        String filePath = "src/main/java/dataInfo/orderData.csv";
+        String filePath = "src/main/resources/orderData.csv";
         int maxIndex = Integer.MIN_VALUE;
         String max = "0000";
 
@@ -431,8 +431,8 @@ public class OrderManeger {
 
     //TODO 주문내역 확인 출력
     public static void check_order_history_from_User(String inputId) {
-        String orderFilePath = "src/main/java/dataInfo/orderData.csv";
-        String foodFilePath = "src/main/java/dataInfo/foodData.csv";
+        String orderFilePath = "src/main/resources/orderData.csv";
+        String foodFilePath = "src/main/resources/foodData.csv";
 
         // 음식 데이터 읽기 (메뉴명과 가격을 매핑하는 해시맵 생성)
         Map<String, Integer> foodPrices = new HashMap<>();
@@ -488,8 +488,8 @@ public class OrderManeger {
 
 
     public static void check_order_history_from_Admin() {
-        String orderFilePath = "src/main/java/dataInfo/orderData.csv";
-        String foodFilePath = "src/main/java/dataInfo/foodData.csv";
+        String orderFilePath = "src/main/resources/orderData.csv";
+        String foodFilePath = "src/main/resources/foodData.csv";
         Map<String, Integer> foodPrices = new HashMap<>();
         try (BufferedReader foodReader = new BufferedReader(new FileReader(foodFilePath))) {
             String line;
