@@ -2,9 +2,7 @@ package Repository;
 
 import Entity.*;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class StoreRepository {
 
@@ -29,9 +27,19 @@ public class StoreRepository {
     public Collection<Store> findAll() {
         return stores.values();
     }
+
     public Store findStoreName(String storename) {
         return stores.get(storename);
     }
 
+    public List<Store> findStoreCategory(int category) {
+        List<Store> matchedStores = new ArrayList<>();
+        for (Store store : stores.values()) {
+            if (store.getStoreCategory() == category) { // 카테고리가 일치하는 경우
+                matchedStores.add(store);
+            }
+        }
+        return matchedStores;        // 해당 카테고리 리스트들 반환
+    }
 
 }

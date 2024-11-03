@@ -57,16 +57,28 @@ public class MenuManager {
                     case 1:
                         System.out.println("회원가입 메뉴로 이동합니다.");
                         user.register();
-                        //user.admin_SetInformation();
                         break;
                     case 2:
                         System.out.println("로그인 메뉴로 이동합니다.");
-                        user.user_Login(time);
+                        String uid = user.user_Login(time);
+                        if (uid.equals("q")) {
+                            //nothing
+                        }
+                        else {
+                            while (true) {
+                                if (3 == OrderManeger.Print_User_Main_Menu(time, uid)) break;        //고객 메인 메뉴 출력
+                            }
+                        }
                         break;
                     case 3:
                         System.out.println("관리자 로그인 메뉴로 이동합니다.");
                         user.admin_Login(time);
+
+                        while(true){
+                            if (3== OrderManeger.Print_Admin_Main_Menu(time)) break;     //관리자 메인 메뉴 출력
+                        }
                         break;
+
                     case 4:
                         System.out.println("프로그램을 종료합니다.\n");
                         return;

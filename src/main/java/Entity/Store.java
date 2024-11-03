@@ -20,6 +20,8 @@ public class Store {
         this.storeCategory = storeCategory;
         this.storeName = storeName;
     }
+
+
     public void setStoreLocation(Position storeLocation) {
         this.storeLocation = storeLocation;
     }
@@ -43,4 +45,7 @@ public class Store {
     public int getStoreCategory() {
         return storeCategory;
     }
+
+
+
 }

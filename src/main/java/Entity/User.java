@@ -4,6 +4,7 @@ import Repository.FoodRepository;
 import Repository.StoreRepository;
 import Repository.UserRepository;
 import manager.CsvManager;
+import manager.OrderManeger;
 
 import java.util.HashMap;
 import java.util.List;
@@ -171,7 +172,7 @@ public class User {
         this.userLocation = userLocation;
     }
 
-    public void user_Login(String time) {
+    public String user_Login(String time) {
         int x = 0, y = 0;
         Scanner sc = new Scanner(System.in);
         csvManager.readUserCsv();
@@ -184,14 +185,14 @@ public class User {
             System.out.print("> ");
             uid = sc.nextLine().trim();
             if (uid.equals("q")) {
-                return;
+                return uid;
             }
 
             System.out.println("비밀번호를 입력해주세요.");
             System.out.print("> ");
             upwd = sc.nextLine().trim();
             if (upwd.equals("q")) {
-                return;
+                return uid;
             }
 
             User user = userRepository.findUserById(uid);
@@ -221,7 +222,7 @@ public class User {
                 }
                 System.out.println("아무 키를 누르면 고객 메인메뉴로 돌아갑니다.");
                 sc.nextLine();
-                return;
+                return uid;
             } else {
                 System.out.println("아이디 또는 비밀번호가 일치하지 않습니다."); // 로그인 실패!
                 System.out.println("사용자 로그인 메뉴로 돌아가려면 'q'를 누르세요.\n");
@@ -234,7 +235,7 @@ public class User {
         Scanner sc = new Scanner(System.in);
         String uid;
         String upwd;
-        System.out.println("사용자 로그인 메뉴로 돌아가려면 'q'를 누르세요.\n");
+        System.out.println("관리자 로그인 메뉴로 돌아가려면 'q'를 누르세요.\n");
         while (true) {
             System.out.println("아이디를 입력해주세요.");
             System.out.print("> ");
@@ -257,6 +258,7 @@ public class User {
                 }
             }
             System.out.println("아이디 또는 비밀번호가 일치하지 않습니다."); //로그인 실패!
+            return;
         }
     }
 

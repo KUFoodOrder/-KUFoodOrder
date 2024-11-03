@@ -4,9 +4,7 @@ import Entity.Food;
 import Entity.Store;
 import Entity.User;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class FoodRepository {
 
@@ -39,4 +37,14 @@ public class FoodRepository {
         // Food 리스트에서 해당 음식을 제거
         foods.remove(food.getFoodName());
     }
+    public List<Food> findFoodsStoreName(String storeName) {
+        List<Food> matchedFoods = new ArrayList<>();
+        for (Food food : foods.values()) {
+            if (food.getStore().getStoreName().equals(storeName)) {
+                matchedFoods.add(food);
+            }
+        }
+        return matchedFoods;          // 해당 가게의 음식 리스트 반환
+    }
+
 }
