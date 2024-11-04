@@ -21,7 +21,7 @@ public class OrderManeger {
 
     static List<List<String>> List_Store = new ArrayList<>();   //카테고리 고른 후 해당 카테고리 가게 저장. ex) [[1, 건국쌈밥], [1, 건국밥상]]
     static List<String> List_Menu = new ArrayList<>();    //가게 고른 후 해당 가게의 메뉴 리스트 ex) [짬뽕, 짜장면, 볶음밥]
-    static List<List<String>> Confirmed_order = new ArrayList<>();     //최종 주문 확정 리스트. orderData.csv에 삽입할 정보들
+    static List<List<String>> Confirmed_order = new ArrayList<>();     //최종 주문 확정 리스트. [[카테고리, 가게, 메뉴, 수량, 개당가격], [~~]]
 
     static Scanner sc = new Scanner(System.in);
 
@@ -186,11 +186,49 @@ public class OrderManeger {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
+            //foodData.csv 관리 추가
+            System.out.println("####" + Confirmed_order.size());
+            String filePath = "src/main/resources/foodData.csv";
+            for (int i=0; i<Confirmed_order.size(); i++) {
+                String targetMenu = Confirmed_order.get(i).get(2);; // 입력 메뉴
+                int addQuantity = Integer.parseInt(Confirmed_order.get(i).get(3)); // 입력 수량
+
+                List<String[]> foodData = new ArrayList<>();
+
+                // CSV 파일 읽기
+                try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+                    String new_line;
+                    while ((new_line = br.readLine()) != null) {
+                        String[] data = new_line.split(",");
+                        // targetMenu와 일치하면 수량을 업데이트
+                        if (data[3].equals(targetMenu)) {
+                            int currentQuantity = Integer.parseInt(data[5]);
+                            data[5] = String.valueOf(currentQuantity + addQuantity);
+                        }
+                        foodData.add(data);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                // CSV 파일에 다시 쓰기
+                try (BufferedWriter bw = new BufferedWriter(new FileWriter(filePath))) {
+                    for (String[] data : foodData) {
+                        bw.write(String.join(",", data));
+                        bw.newLine();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("Update complete!");
+            }
+
             System.out.println("주문이 완료되었습니다. 엔터 키를 누르면 고객 메뉴로 돌아갑니다.");
         } else {
             System.out.println("주문이 완료되지 않았습니다. 엔터 키를 누르면 고객 메뉴로 돌아갑니다.");
         }
 
+        System.out.println("check: " + Confirmed_order);
         Scanner sc = new Scanner(System.in);
         sc.nextLine();  // 사용자가 Enter 키를 누를 때까지 대기
 
