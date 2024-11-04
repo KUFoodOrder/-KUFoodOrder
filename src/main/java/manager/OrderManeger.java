@@ -188,7 +188,6 @@ public class OrderManeger {
             }
 
             //foodData.csv 관리 추가
-            System.out.println("####" + Confirmed_order.size());
             String filePath = "src/main/resources/foodData.csv";
             for (int i=0; i<Confirmed_order.size(); i++) {
                 String targetMenu = Confirmed_order.get(i).get(2);; // 입력 메뉴
@@ -220,9 +219,7 @@ public class OrderManeger {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                System.out.println("Update complete!");
             }
-
             System.out.println("주문이 완료되었습니다. 엔터 키를 누르면 고객 메뉴로 돌아갑니다.");
         } else {
             System.out.println("주문이 완료되지 않았습니다. 엔터 키를 누르면 고객 메뉴로 돌아갑니다.");
