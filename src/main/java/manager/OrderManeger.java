@@ -224,8 +224,6 @@ public class OrderManeger {
         } else {
             System.out.println("주문이 완료되지 않았습니다. 엔터 키를 누르면 고객 메뉴로 돌아갑니다.");
         }
-
-        System.out.println("check: " + Confirmed_order);
         Scanner sc = new Scanner(System.in);
         sc.nextLine();  // 사용자가 Enter 키를 누를 때까지 대기
 
