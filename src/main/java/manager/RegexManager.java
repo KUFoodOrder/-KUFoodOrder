@@ -136,6 +136,15 @@ public class RegexManager {
         LocalDateTime localDateTime = LocalDateTime.parse(dateTime, inputFormatter);
         return localDateTime.format(outputFormatter);
     }
+    public boolean checkKorean(String input) {
+        String pattern = "^[가-힣]+$";
 
+        if (Pattern.matches(pattern, input)) {
+            return true;
+        } else {
+            System.out.println("입력은 한글만 가능합니다.");
+            return false;
+        }
+    }
 
 }

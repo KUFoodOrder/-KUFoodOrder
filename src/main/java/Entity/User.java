@@ -5,6 +5,7 @@ import Repository.StoreRepository;
 import Repository.UserRepository;
 import manager.CsvManager;
 import manager.OrderManeger;
+import manager.RegexManager;
 
 import java.util.HashMap;
 import java.util.List;
@@ -22,6 +23,7 @@ public class User {
     UserRepository userRepository = UserRepository.getInstance();
     FoodRepository foodRepository = FoodRepository.getInstance();
     StoreRepository storeRepository = StoreRepository.getInstance();
+    RegexManager regexManager = new RegexManager();
 
     static String admin_id = "admin";
 
@@ -283,17 +285,63 @@ public class User {
                     System.out.println("--- 메뉴 정보 변경하기 ---");
                     System.out.println("1.추가  2.삭제");
                     System.out.print("> ");
-                    int choice = scanner.nextInt();
+                    int choice = 0;
+                    while (true) {
+                        if (scanner.hasNextInt()) {
+                            choice = scanner.nextInt();
+                            break;
+                        } else {
+                            System.out.println("1 또는 2를 입력하세요.");
+                            scanner.next();
+                        }
+                    }
                     if(choice == 1){ //메뉴 추가
-                        System.out.print("가게 이름 > ");
-                        String storeName = scanner.next();
-                        System.out.print("메뉴 이름 > ");
-                        String foodName = scanner.next();
-                        System.out.print("메뉴 가격 > ");
-                        int foodPrice = scanner.nextInt();
-                        if(storeRepository.findStoreName(storeName)==null){ // 가게 없으면
-                            System.out.println("해당 가게가 존재하지 않습니다.");
-                            return;
+                        int foodPrice = 0;
+                        boolean validInput = false;
+                        String storeName = "";
+                        String foodName = "";
+                        // 가게 이름 입력 예외 처리
+                        while (true) {
+                            System.out.print("가게 이름 > ");
+                            storeName = scanner.next().trim(); // 공백 제거
+
+                            // 한글만 입력 받도록 정규 표현식 사용
+                            if (regexManager.checkKorean(storeName)) {
+                                if (storeRepository.findStoreName(storeName) != null) { // 가게가 존재하는지 확인
+                                    break; // 유효한 가게 이름이면 루프 종료
+                                } else {
+                                    System.out.println("해당 가게가 존재하지 않습니다.");
+                                }
+                            } else {
+                                System.out.println("가게 이름은 한글로만 입력해주세요."); // 한글 이외의 입력 안내
+                            }
+                        }
+
+                        // 메뉴 이름 입력 예외 처리
+                        while (true) {
+                            System.out.print("메뉴 이름 > ");
+                            foodName = scanner.next().trim(); // 공백 제거
+
+                            // 한글만 입력 받도록 정규 표현식 사용
+                            if (regexManager.checkKorean(foodName)) {
+                                if (foodRepository.findFoodByName(foodName) == null) { // 메뉴가 존재하지 않으면
+                                    break; // 유효한 메뉴 이름이면 루프 종료
+                                } else {
+                                    System.out.println("이미 존재하는 메뉴입니다."); // 이미 존재하는 메뉴일 경우 안내
+                                }
+                            } else {
+                                System.out.println("메뉴 이름은 한글로만 입력해주세요."); // 한글 이외의 입력 안내
+                            }
+                        }
+                        while (!validInput) {
+                            System.out.print("메뉴 가격 > ");
+                            if (scanner.hasNextInt()) {
+                                foodPrice = scanner.nextInt();
+                                validInput = true;
+                            } else {
+                                System.out.println("유효한 가격을 입력하세요.");
+                                scanner.next();
+                            }
                         }
                         Store s = storeRepository.findStoreName(storeName);
                         if(foodRepository.findFoodByName(foodName)==null){
@@ -307,19 +355,29 @@ public class User {
                             return;
                         }
                     }
-                    else if (choice == 2){ //메뉴 삭제
-                        System.out.println("삭제할 메뉴 이름을 입력해주세요");
-                        System.out.print("> ");
-                        String foodName = scanner.next();
-                        if(foodRepository.findFoodByName(foodName)==null){ // 삭제할 메뉴가 없다면
+                    else if (choice == 2) { // 메뉴 삭제
+                        String foodName = "";
+                        while (true) {
+                            System.out.println("삭제할 메뉴 이름을 입력해주세요");
+                            System.out.print("> ");
+                            foodName = scanner.next(); // 한글 입력 받기
+
+                            // 한글로만 이루어져 있는지 확인
+                            if (regexManager.checkKorean(foodName)) {
+                                scanner.nextLine(); // 버퍼 비우기
+                                break; // 유효한 한글 입력이 들어온 경우 루프 종료
+                            } else {
+                                scanner.nextLine(); // 잘못된 입력이 들어온 경우 버퍼 비우기
+                            }
+                        }
+
+                        if (foodRepository.findFoodByName(foodName) == null) { // 삭제할 메뉴가 없다면
                             System.out.println("해당 메뉴는 존재하지 않습니다.");
-                            return;
-                        }else{
+                        } else {
                             Food f = foodRepository.findFoodByName(foodName);
                             foodRepository.removeFood(f); // 리스트에서 해당 메뉴 지워줌
                             csvManager.writeFoodCsv(foodRepository); // 파일 수정
                             System.out.println("메뉴가 삭제되었습니다.");
-                            return;
                         }
                     }
                 }
@@ -328,14 +386,28 @@ public class User {
                     System.out.println("가격 변경할 메뉴 이름을 입력해주세요.");
                     System.out.print("> ");
                     String foodName = scanner.next();
+
                     Food f = foodRepository.findFoodByName(foodName);
-                    if(f==null){
+                    if (f == null) {
                         System.out.println("해당 메뉴가 존재하지 않습니다.");
                         return;
                     }
-                    System.out.println("변경할 금액을 입력해주세요.");
-                    System.out.print("> ");
-                    int foodPrice = scanner.nextInt();
+
+                    int foodPrice = 0;
+                    while (true) {
+                        System.out.println("변경할 금액을 입력해주세요.");
+                        System.out.print("> ");
+
+                        // 가격 입력 예외 처리
+                        if (scanner.hasNextInt()) {
+                            foodPrice = scanner.nextInt();
+                            break;
+                        } else {
+                            System.out.println("유효한 가격을 입력하세요.");
+                            scanner.next();
+                        }
+                    }
+
                     f.setFoodPrice(foodPrice); // 메뉴 금액 변경
                     csvManager.writeFoodCsv(foodRepository); // 파일 수정
                     System.out.println("변경되었습니다.");
@@ -346,6 +418,10 @@ public class User {
                     System.out.println("위치 변경할 가게 이름을 입력해주세요.");
                     System.out.print("> ");
                     String storeName = scanner.next();
+                    if (!storeName.matches(storeName)) {
+                        System.out.println("가게 이름은 한글로만 입력할 수 있습니다.");
+                        return;
+                    }
                     Store s = storeRepository.findStoreName(storeName);
                     if (s == null) {
                         System.out.println("해당 가게가 존재하지 않습니다.");
@@ -353,29 +429,32 @@ public class User {
                     }
 
                     int x = 0, y = 0;
-                    System.out.println("변경할 위치를 (x,y) 형식으로 입력해주세요.");
-                    System.out.print("> ");
-                    scanner.nextLine();
-                    String input = scanner.nextLine();
+                    while (true) {
+                        System.out.println("변경할 위치를 (x,y) 형식으로 입력해주세요.");
+                        System.out.print("> ");
+                        scanner.nextLine();
+                        String input = scanner.nextLine();
 
-                    try {
-                        String[] coordinates = input.split(",");
-                        if (coordinates.length != 2) {
-                            System.out.println("위치를 (x,y) 형식으로 입력해주세요.");
-                            return;
+                        try {
+                            String[] coordinates = input.split(",");
+                            if (coordinates.length != 2) {
+                                System.out.println("위치를 (x,y) 형식으로 입력해주세요.");
+                                return;
+                            }
+                            x = Integer.parseInt(coordinates[0].trim());
+                            y = Integer.parseInt(coordinates[1].trim());
+
+                            s.setStoreLocation(new Position(x, y)); // 위치 새로 설정해주기
+                            csvManager.writeStoreCsv(storeRepository); // 파일 수정
+                            System.out.println("변경되었습니다.");
+                            break;     // 정상적으로 위치 바뀌면?
+                        } catch (NumberFormatException e) {
+                            System.out.println("유효한 숫자를 입력해주세요.");
+                        } catch (Exception e) {
+                            System.out.println("입력 형식이 올바르지 않습니다.");
                         }
-                        x = Integer.parseInt(coordinates[0].trim());
-                        y = Integer.parseInt(coordinates[1].trim());
-
-                        s.setStoreLocation(new Position(x, y)); // 위치 새로 설정해주기
-                        csvManager.writeStoreCsv(storeRepository); // 파일 수정
-                        System.out.println("변경되었습니다.");
-                    } catch (NumberFormatException e) {
-                        System.out.println("유효한 숫자를 입력해주세요."); // 예외 처리
-                    } catch (Exception e) {
-                        System.out.println("입력 형식이 올바르지 않습니다.");
+                        return;
                     }
-                    return;
                 }
 
                 default -> {

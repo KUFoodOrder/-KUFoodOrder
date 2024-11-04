@@ -605,9 +605,9 @@ public class OrderManeger {
     }
 
     private static void check_category_history_from_Admin() {
+
         StoreRepository storeRepository = StoreRepository.getInstance();
         int[] categories = {1, 2, 3}; // 한식, 중식, 일식
-
         for (int category : categories) {
             List<Store> storesByCategory = storeRepository.findStoreCategory(category);
             if (category == 1) {

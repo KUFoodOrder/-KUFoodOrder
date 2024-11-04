@@ -37,4 +37,14 @@ public class Order {
     public List<Integer> getQuantitys() {
         return quantitys;
     }
+
+    @Override
+    public String toString() {
+        return "orderTime='" + orderTime + '\'' +
+                ", orderId='" + orderId + '\'' +
+                ", user=" + user +
+                ", foods=" + foods +
+                ", quantitys=" + quantitys +
+                '}';
+    }
 }
