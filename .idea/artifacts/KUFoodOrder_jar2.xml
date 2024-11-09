@@ -1,6 +1,6 @@
 <component name="ArtifactManager">
   <artifact type="jar" name="KUFoodOrder:jar2">
-    <output-path>$PROJECT_DIR$/out/artifacts/KUFoodOrder_jar2</output-path>
+    <output-path>$PROJECT_DIR$/out/artifacts</output-path>
     <root id="archive" name="KUFoodOrder.jar">
       <element id="module-output" name="KUFoodOrder.main" />
       <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.junit.jupiter/junit-jupiter/5.10.0/8fea1d9c58b2156f1b998f2f18da04bc9e087f74/junit-jupiter-5.10.0.jar" path-in-jar="/" />

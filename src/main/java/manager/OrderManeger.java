@@ -37,7 +37,7 @@ public class OrderManeger {
             System.out.println("고객 메인 메뉴 번호를 입력해주세요.");
             System.out.print(">");
             String input = sc.nextLine();
-
+            input = input.trim();
             if (regexManager.checkMenu(input, 3)) {
                 userMainMenu_user_selected = Integer.parseInt(input);
                 System.out.println(userMainMenu_user_selected + "번을 선택하셨습니다.");
@@ -57,150 +57,58 @@ public class OrderManeger {
 
     public static void getOrderFromUser(String time, String id) {
         Confirmed_order.clear();
-        int keep_order = 1;         //첫번째 주문!!
+        int keep_order = 1;
         while (true) {
-            //카테고리, 가게, 메뉴 선택
             int Category_user_selected = getCategoryFromUser();
             int Store_user_selected = getStoreFromUser(Category_user_selected);
             int Menu_user_selected = getMenuFromUser(Store_user_selected);
-            //리스트 내부 확인 테스트
-            //System.out.println("List_Store is " + List_Store);
-            //System.out.println("List_Menu is " + List_Menu);
 
-
-            //수량 파악
             int Quantity = Quantity_check();
 
-            //주문 확정된 메뉴 Confirmed_order에 넣기, 그리고 주문한 내용 출력
-            //리스트 양식: 카테고리 가게이름 메뉴 개수 개당가격  ex) [1, 건국밥상, 김치찌개정식, 5, 9500]
             pushToConfirmed(Category_user_selected, Store_user_selected, Menu_user_selected, Quantity, keep_order);
 
-
-            //총 주문 목록 테스트용 출력
-            //System.out.println("keep_order = " + keep_order);
-            //System.out.println("Confirmed_order = " + Confirmed_order);
-
-
-            //추가 주문 여부 체크
             keep_order = Keep_Order_Check(keep_order);
-            if (keep_order == 0) break;                   //더 이상 추가 주문 안할거면 break
+            if (keep_order == 0) break;
             keep_order++;
         }
-        //주문서 출력
+
         Print_Bill(Confirmed_order);
 
-
-        /* TQ
-        //순번이랑 음식, 수량 리스트 제작 / user id 제작
-        String cur_max = check_max();
-        List<Food> foodList = new ArrayList<>(); // Food 객체를 저장할 리스트
-        List<Integer> quantityList = new ArrayList<>(); // 개수를 저장할 리스트
-        FoodRepository foodRepository = FoodRepository.getInstance();
-        for (List<String> row : Confirmed_order) {
-            String menuName = row.get(2); // 각 행의 메뉴 이름
-            int quantity = Integer.parseInt(row.get(3)); // 각 행의 개수
-            // 음식 이름으로 Food 객체를 검색하여 foodList에 추가
-            Food food = foodRepository.findFoodByName(menuName);
-            if (food != null) {
-                foodList.add(food); // 음식 객체 리스트에 추가
-                quantityList.add(quantity); // 개수 리스트에 추가
-            } else {
-                System.out.println("음식 '" + menuName + "'을 찾을 수 없습니다.");
-            }
-        }
-        CsvManager csvManager = new CsvManager();
-        UserRepository userRepository = csvManager.readUserCsv();
-        //System.out.println("id = " + id);
-        User user_id = userRepository.findUserById(id);
-        //System.out.println("User = " + user_id);
-
-        //주문 확정할건지 체크 확정 시 1, 취소 시 0 리턴
         if (1 == getConfirmFromUser()) {
-            OrderRepository orderRepository = csvManager.readOrderCsv();
-
-            // 새 주문 객체 생성
-            Order newOrder = new Order(time, cur_max, user_id, foodList, quantityList);
-            orderRepository.addOrder(newOrder); // OrderRepository에 추가
-
-            System.out.println(newOrder.getOrderId());
-            System.out.println(newOrder.getOrderTime());
-            System.out.println(newOrder.getUser());
-            System.out.println(newOrder.getFoods());
-            System.out.println(newOrder.getQuantitys());
-
-
-            // 새로운 주문을 파일에 추가
-            csvManager.writeOrderCsv(orderRepository);
-
-            System.out.println("주문이 완료되었습니다. 엔터 키를 누르면 고객 메뉴로 돌아갑니다.");
-        } else {
-            System.out.println("주문이 완료되지 않았습니다. 엔터 키를 누르면 고객 메뉴로 돌아갑니다.");
-        }
-        */
-
-
-        //기존 userData.csv 구현방식
-//        //주문 확정할건지 체크 확정 시 1, 취소 시 0 리턴
-//        if (1 == getConfirmFromUser()) {
-//            //지금 orderData.csv에 max 순번 찾고 다음 순번으로 리턴
-//            String cur_max = check_max();
-//            //시간 순번 id 메뉴 수량 순으로 orderData.csv에 append
-//            try (FileWriter writer = new FileWriter("src/main/resources/orderData.csv", true)) {
-//                for (List<String> row : Confirmed_order) {
-//                    String line = String.join(",", time, cur_max, id, row.get(2), row.get(3));
-//                    writer.write(line + "\n");
-//                }
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//            System.out.println("주문이 완료되었습니다. 엔터 키를 누르면 고객 메뉴로 돌아갑니다.");
-//        }
-//        else {
-//            System.out.println("주문이 완료되지 않았습니다. 엔터 키를 누르면 고객 메뉴로 돌아갑니다.");
-//        }
-
-        //새로운 userData.csv 구현방식
-        // 주문 확정할건지 체크 확정 시 1, 취소 시 0 리턴
-        if (1 == getConfirmFromUser()) {
-            // 지금 orderData.csv에 max 순번 찾고 다음 순번으로 리턴
             String cur_max = check_max();
 
-            // "메뉴:수량" 형식으로 메뉴와 수량을 병합
             StringBuilder menuItems = new StringBuilder();
             for (int i = 0; i < Confirmed_order.size(); i++) {
                 List<String> row = Confirmed_order.get(i);
-                String menuItem = row.get(2) + ":" + row.get(3); // 메뉴:수량
+                String menuItem = row.get(2) + ":" + row.get(3);
                 menuItems.append(menuItem);
-
-                // 메뉴 구분을 위한 콤마 추가 (마지막 항목 뒤에는 콤마를 추가하지 않음)
                 if (i < Confirmed_order.size() - 1) {
                     menuItems.append(",");
                 }
             }
 
-            // 시간, 순번, id와 병합된 메뉴:수량 리스트를 한 줄로 작성
+            String homeDir = System.getProperty("user.home");
+            String orderFilePath = Paths.get(homeDir, "orderData.csv").toString();
+
             String line = String.join(",", time, cur_max, id, menuItems.toString());
 
-            try (FileWriter writer = new FileWriter("src/main/resources/orderData.csv", true)) {
-                writer.write(line + "\n"); // 파일에 한 줄로 추가
+            try (FileWriter writer = new FileWriter(orderFilePath, true)) {
+                writer.write(line + "\n");
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
-            //foodData.csv 관리 추가
-            String filePath = "src/main/resources/foodData.csv";
-            for (int i=0; i<Confirmed_order.size(); i++) {
-                String targetMenu = Confirmed_order.get(i).get(2);; // 입력 메뉴
-                int addQuantity = Integer.parseInt(Confirmed_order.get(i).get(3)); // 입력 수량
+            String foodFilePath = Paths.get(homeDir, "foodData.csv").toString();
+            for (int i = 0; i < Confirmed_order.size(); i++) {
+                String targetMenu = Confirmed_order.get(i).get(2);
+                int addQuantity = Integer.parseInt(Confirmed_order.get(i).get(3));
 
                 List<String[]> foodData = new ArrayList<>();
 
-                // CSV 파일 읽기
-                try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+                try (BufferedReader br = new BufferedReader(new FileReader(foodFilePath))) {
                     String new_line;
                     while ((new_line = br.readLine()) != null) {
                         String[] data = new_line.split(",");
-                        // targetMenu와 일치하면 수량을 업데이트
                         if (data[3].equals(targetMenu)) {
                             int currentQuantity = Integer.parseInt(data[5]);
                             data[5] = String.valueOf(currentQuantity + addQuantity);
@@ -210,8 +118,8 @@ public class OrderManeger {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                // CSV 파일에 다시 쓰기
-                try (BufferedWriter bw = new BufferedWriter(new FileWriter(filePath))) {
+
+                try (BufferedWriter bw = new BufferedWriter(new FileWriter(foodFilePath))) {
                     for (String[] data : foodData) {
                         bw.write(String.join(",", data));
                         bw.newLine();
@@ -225,9 +133,9 @@ public class OrderManeger {
             System.out.println("주문이 완료되지 않았습니다. 엔터 키를 누르면 고객 메뉴로 돌아갑니다.");
         }
         Scanner sc = new Scanner(System.in);
-        sc.nextLine();  // 사용자가 Enter 키를 누를 때까지 대기
-
+        sc.nextLine();
     }
+
 
     //TODO 카테고리 선택
     private static int getCategoryFromUser() {
@@ -235,6 +143,7 @@ public class OrderManeger {
         while (true) {
             Print_Category();
             String input = sc.nextLine();
+            input = input.trim();
 
             if (regexManager.checkMenu(input, 3)) {
                 int Category_user_selected = Integer.parseInt(input);
@@ -261,6 +170,7 @@ public class OrderManeger {
         while (true) {
             Print_Store(x);
             String input = sc.nextLine();
+            input = input.trim();
             if (regexManager.checkMenu(input, List_Store.size())) {
                 int Store_user_selected = Integer.parseInt(input);
                 System.out.println(Store_user_selected + "번을 선택하셨습니다.");
@@ -302,7 +212,7 @@ public class OrderManeger {
             Print_Menu(x);
 
             String input = sc.nextLine();
-
+            input = input.trim();
             if (regexManager.checkMenu(input, List_Menu.size())) {
                 int Menu_user_selected = Integer.parseInt(input);
                 System.out.println(Menu_user_selected + "번을 선택하셨습니다.");
@@ -350,6 +260,7 @@ public class OrderManeger {
         Scanner sc = new Scanner(System.in);
         while (true) {
             String input = sc.nextLine();
+            input = input.trim();
             if (regexManager.checkMenu(input, 10)) {
                 int Menu_Quantity = Integer.parseInt(input);
                 System.out.println(Menu_Quantity + "개를 선택하셨습니다.");
@@ -394,6 +305,7 @@ public class OrderManeger {
         Scanner sc = new Scanner(System.in);
         while (true) {
             String input = sc.nextLine();
+            input = input.trim();
             if (regexManager.checkYN(input)) {
                 if (input.charAt(0) == 'Y') {
                     System.out.println("계속 주문합니다.");
@@ -425,7 +337,7 @@ public class OrderManeger {
         Scanner sc = new Scanner(System.in);
         while (true) {
             String input = sc.nextLine();
-
+            input = input.trim();
             if (regexManager.checkYN(input)) {
                 if (input.charAt(0) == 'Y') {
                     System.out.println("주문을 확정합니다.");
@@ -439,7 +351,9 @@ public class OrderManeger {
     }
 
     private static String check_max() {
-        String filePath = "src/main/resources/orderData.csv";
+        // 사용자 홈 디렉토리에 있는 orderData.csv 파일 경로
+        String homeDir = System.getProperty("user.home");
+        String filePath = Paths.get(homeDir, "orderData.csv").toString();
         int maxIndex = Integer.MIN_VALUE;
         String max = "0000";
 
@@ -456,16 +370,20 @@ public class OrderManeger {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         int number = Integer.parseInt(max);
         number++;
         max = String.format("%04d", number);
         return max;
     }
 
+
     //TODO 주문내역 확인 출력
     public static void check_order_history_from_User(String inputId) {
-        String orderFilePath = "src/main/resources/orderData.csv";
-        String foodFilePath = "src/main/resources/foodData.csv";
+        // 사용자 홈 디렉토리에 있는 파일 경로
+        String homeDir = System.getProperty("user.home");
+        String orderFilePath = Paths.get(homeDir, "orderData.csv").toString();
+        String foodFilePath = Paths.get(homeDir, "foodData.csv").toString();
 
         // 음식 데이터 읽기 (메뉴명과 가격을 매핑하는 해시맵 생성)
         Map<String, Integer> foodPrices = new HashMap<>();
@@ -520,10 +438,16 @@ public class OrderManeger {
     }
 
 
+
     public static void check_order_history_from_Admin() {
-        String orderFilePath = "src/main/resources/orderData.csv";
-        String foodFilePath = "src/main/resources/foodData.csv";
+        // 사용자 홈 디렉토리에 있는 파일 경로
+        String homeDir = System.getProperty("user.home");
+        String orderFilePath = Paths.get(homeDir, "orderData.csv").toString();
+        String foodFilePath = Paths.get(homeDir, "foodData.csv").toString();
+
         Map<String, Integer> foodPrices = new HashMap<>();
+
+        // 음식 데이터 읽기 (메뉴명과 가격을 매핑하는 해시맵 생성)
         try (BufferedReader foodReader = new BufferedReader(new FileReader(foodFilePath))) {
             String line;
             while ((line = foodReader.readLine()) != null) {
@@ -579,6 +503,7 @@ public class OrderManeger {
     }
 
 
+
     public static int Print_Admin_Main_Menu(String time) {
         int adminMainMenu_admin_selected = 0;
         while (true) {
@@ -590,7 +515,7 @@ public class OrderManeger {
             System.out.println("관리자 메인 메뉴 번호를 입력해주세요.");
             System.out.print(">");
             String input = sc.nextLine();
-
+            input = input.trim();
             if (regexManager.checkMenu(input, 3)) {
                 adminMainMenu_admin_selected = Integer.parseInt(input);
                 System.out.println(adminMainMenu_admin_selected + "번을 선택하셨습니다.");
@@ -623,7 +548,7 @@ public class OrderManeger {
             System.out.println("메뉴 번호를 입력해주세요.");
             System.out.print(">");
             String input = sc.nextLine();
-
+            input = input.trim();
             if (regexManager.checkMenu(input, 2)) {
                 adminOrderCheckMenu_admin_selected = Integer.parseInt(input);
                 System.out.println(adminOrderCheckMenu_admin_selected + "번을 선택하셨습니다.");

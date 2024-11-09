@@ -9,6 +9,27 @@ import java.util.regex.Pattern;
 
 public class RegexManager {
 
+    public boolean check_XY(String input) {
+        if (input.matches("\\d{1,4}\\s+\\d{1,4}")) {
+            String[] parts = input.split("\\s+");
+            int x = Integer.parseInt(parts[0]);
+            int y = Integer.parseInt(parts[1]);
+
+            if (x >= 0 && x <= 9999 && y >= 0 && y <= 9999) {
+                //System.out.println("x = " + x + ", y = " + y);
+                return true;
+            }
+            else {
+                System.out.println("입력 범위를 벗어났습니다. x와 y는 0에서 9999 사이의 값이어야 합니다.");
+                return false;
+            }
+        }
+        else {
+            System.out.println("입력 형식이 잘못되었습니다. x와 y는 0에서 9999 사이의 값이어야 하며, 공백으로 구분되어야 합니다.");
+            return false;
+        }
+    }
+
     //승효 추가 본
     public boolean checkMenu(String input, int x) {     //1부터 x까지 정규식 패턴 검증 (x>=1 && x<=10
         String pattern = "";

@@ -205,10 +205,13 @@ public class User {
 
                 while (true) {
                     try {
-                        System.out.println("사용자 위치를 (x,y) 형식으로 입력해주세요.");
+                        System.out.println("사용자 위치를 (x y) 형식으로 입력해주세요.");
                         System.out.print("> ");
                         String input = sc.nextLine();
-                        String[] coordinates = input.split(",");
+                        input=input.trim();
+                        if (!regexManager.check_XY(input)) continue;
+
+                        String[] coordinates = input.split("\\s+");
 
                         x = Integer.parseInt(coordinates[0].trim());
                         y = Integer.parseInt(coordinates[1].trim());
