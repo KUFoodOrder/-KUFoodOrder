@@ -616,7 +616,7 @@ public class OrderManeger {
     private static void Print_Admin_Order_Check_Menu() {
         int adminOrderCheckMenu_admin_selected = 0;
         while (true) {
-            System.out.println("----------고객 메인 메뉴----------");
+            System.out.println("----------관리자 메인 메뉴----------");
             System.out.println("1. 전체 주문내역 확인");
             System.out.println("2. 카테고리별 주문내역 확인");
             System.out.println("--------------------------------");
