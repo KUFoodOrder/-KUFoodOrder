@@ -76,6 +76,36 @@ public class CsvManager {
         return userRepository;
     }
 
+    public UserRepository home_readUserCsv() {
+        String homeDir = System.getProperty("user.home");
+        Path path = Paths.get(homeDir, "userData.csv");
+        try (BufferedReader br = Files.newBufferedReader(path))
+        {
+            String line;
+
+            while ((line = br.readLine()) != null) {
+                if (line.isEmpty()) {
+                    continue;  // 빈 줄 무시
+                }
+                String[] array = line.split(",");
+
+                User user = new User(array[0], array[1], array[2],
+                        new Position(Integer.parseInt(array[3]), Integer.parseInt(array[4])));
+
+                userRepository.addUser(user);  // 사용자 추가
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            System.out.println("회원 정보 파일이 없습니다.\n프로그램을 종료합니다.");
+            System.exit(0);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("파일 읽기 중 오류가 발생했습니다.\n프로그램을 종료합니다.");
+            System.exit(0);
+        }
+        return userRepository;
+    }
+
 
     public StoreRepository readStoreCsv() {
 
