@@ -40,18 +40,33 @@ public class MenuManager {
         Path foodFilePath = Paths.get(homeDir, "foodData.csv");
         Path storeFilePath = Paths.get(homeDir, "storeData.csv");
         Path orderFilePath = Paths.get(homeDir, "orderData.csv");
+        Path userFilePath = Paths.get(homeDir, "userData.csv");
 
+        //TODO 파일존재할경우에도 데이터불러와서 레포지토리에 저장하도록 수정해야함
         // CSV 파일이 없을 경우에만 데이터를 복사
         User user = new User();
-        if (Files.notExists(foodFilePath) || Files.notExists(storeFilePath) || Files.notExists(orderFilePath)) {
-            FoodRepository foodRepository = csvManager.readFoodCsv();
-            StoreRepository storeRepository = csvManager.readStoreCsv();
-            OrderRepository orderRepository = csvManager.readOrderCsv();
+        UserRepository userRepository = csvManager.readUserCsv();
+        FoodRepository foodRepository = csvManager.readFoodCsv();
+        StoreRepository storeRepository = csvManager.readStoreCsv();
+        OrderRepository orderRepository = csvManager.readOrderCsv();
 
-            // 초기 데이터만 CSV로 저장
-            csvManager.writeFoodCsv(foodRepository);
-            csvManager.writeOrderCsv(orderRepository);
-            csvManager.writeStoreCsv(storeRepository);
+        // 초기 데이터만 CSV로 저장
+        csvManager.writeUserCsv(userRepository);
+        csvManager.writeFoodCsv(foodRepository);
+        csvManager.writeOrderCsv(orderRepository);
+        csvManager.writeStoreCsv(storeRepository);
+
+        if (Files.notExists(foodFilePath) || Files.notExists(storeFilePath) || Files.notExists(orderFilePath)|| Files.notExists(userFilePath)) {
+//            UserRepository userRepository = csvManager.readUserCsv();
+//            FoodRepository foodRepository = csvManager.readFoodCsv();
+//            StoreRepository storeRepository = csvManager.readStoreCsv();
+//            OrderRepository orderRepository = csvManager.readOrderCsv();
+//
+//            // 초기 데이터만 CSV로 저장
+//            csvManager.writeUserCsv(userRepository);
+//            csvManager.writeFoodCsv(foodRepository);
+//            csvManager.writeOrderCsv(orderRepository);
+//            csvManager.writeStoreCsv(storeRepository);
         }
 
 
