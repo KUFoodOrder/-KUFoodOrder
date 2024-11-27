@@ -137,7 +137,6 @@ public class OrderManeger {
     }
 
 
-    //TODO 카테고리 선택
     private static int getCategoryFromUser() {
         Scanner sc = new Scanner(System.in);
         while (true) {
@@ -164,7 +163,6 @@ public class OrderManeger {
         System.out.print(">");
     }
 
-    //TODO 가게 선택
     private static int getStoreFromUser(int x) {
         Scanner sc = new Scanner(System.in);
         while (true) {
@@ -179,33 +177,36 @@ public class OrderManeger {
         }
     }
 
-    //가게 출력
-    private static void Print_Store(int category) {        //같은 가게 중복이 없어서 storeData.csv 사용.
+    // 가게 출력
+    private static void Print_Store(int category) {
         StoreRepository storeRepository = csvManager.readStoreCsv();
         List_Store.clear();
 
         int numbering = 1;
-        System.out.println("----------가게 선택----------");
-        // 해당 카테고리의 가게만 출력
+        System.out.println("---------- 가게 선택 ----------");
+
+        // 해당 카테고리에 속한 가게만 출력
         for (Store store : storeRepository.findAll()) {
-            if (store.getStoreCategory() == category) { // 카테고리 일치 여부 확인
+            // 가게가 해당 카테고리에 속하는지 확인
+            if (store.getStoreCategories().contains(category)) {
                 System.out.print(numbering++ + ". ");
                 System.out.println(store.getStoreName().trim());
 
                 // 카테고리랑 가게 이름 List_Store에 추가
                 List<String> storeInfo = List.of(
-                        String.valueOf(store.getStoreCategory()),
+                        String.valueOf(category), // 첫 번째 카테고리
                         store.getStoreName()
                 );
                 List_Store.add(storeInfo);
             }
         }
-        System.out.println("---------------------------");
+
+        System.out.println("----------------------------");
         System.out.println("가게 번호를 입력해주세요.");
         System.out.print(">");
     }
 
-    //TODO 메뉴선택
+
     private static int getMenuFromUser(int x) {
         Scanner sc = new Scanner(System.in);
         while (true) {
@@ -254,7 +255,6 @@ public class OrderManeger {
         System.out.print(">");
     }
 
-    //TODO 수량 확인
     private static int Quantity_check() {
         System.out.println("주문하신 메뉴의 수량을 선택해주세요.(최대 10개)");
         Scanner sc = new Scanner(System.in);
@@ -298,7 +298,6 @@ public class OrderManeger {
         }
     }
 
-    //TODO 추가 주문 여부 확인
     private static int Keep_Order_Check(int keep_order) {
         System.out.println("메뉴를 추가 주문하시겠습니까?");
         System.out.print("[Y/N]");
@@ -318,7 +317,6 @@ public class OrderManeger {
         }
     }
 
-    //TODO 현재까지 주문서 출력 후 주문 확정 받기!
     private static void Print_Bill(List<List<String>> Bill) {
         int cost_sum = 0;
         System.out.println("<주문서>");
@@ -377,8 +375,6 @@ public class OrderManeger {
         return max;
     }
 
-
-    //TODO 주문내역 확인 출력
     public static void check_order_history_from_User(String inputId) {
         // 사용자 홈 디렉토리에 있는 파일 경로
         String homeDir = System.getProperty("user.home");
@@ -452,8 +448,8 @@ public class OrderManeger {
             String line;
             while ((line = foodReader.readLine()) != null) {
                 String[] columns = line.split(",");
-                String foodName = columns[3];
-                int price = Integer.parseInt(columns[4]);
+                String foodName = columns[3];   // 음식 이름
+                int price = Integer.parseInt(columns[4]);  // 음식 가격
                 foodPrices.put(foodName, price);
             }
         } catch (IOException e) {
@@ -490,8 +486,8 @@ public class OrderManeger {
             System.out.println("  ➤ 주문내역:");
 
             for (String[] item : userItems) {
-                String itemName = item[0];
-                int quantity = Integer.parseInt(item[1]);
+                String itemName = item[1];
+                int quantity = Integer.parseInt(item[2]);
                 int price = foodPrices.getOrDefault(itemName, 0); // 가격을 찾지 못할 경우 0으로 설정
                 totalPrice += price * quantity;
 
@@ -562,59 +558,29 @@ public class OrderManeger {
         }
     }
 
+
     private static void check_category_history_from_Admin() {
 
         StoreRepository storeRepository = StoreRepository.getInstance();
         int[] categories = {1, 2, 3}; // 한식, 중식, 일식
-        for (int category : categories) {
-            List<Store> storesByCategory = storeRepository.findStoreCategory(category);
-            if (category == 1) {
-                int cnt = 1;
-                System.out.println("------------ 한식 ------------");
-                if (storesByCategory.isEmpty()) {
-                    System.out.println("해당 카테고리 주문 내역이 없습니다.");
-                } else {
-                    for (Store store : storesByCategory) {
-                        FoodRepository foodRepository = FoodRepository.getInstance();
-                        List<Food> foodsInStore = foodRepository.findFoodsStoreName(store.getStoreName());
-                        System.out.println((cnt++) + ". " + store.getStoreName());
-                        int price = 0;
-                        for (Food food : foodsInStore) {
-                            System.out.println("   " + food.getFoodName() + " " + food.getFoodQuantity());
-                            price += food.getFoodPrice() * food.getFoodQuantity();
-                        }
 
-                        System.out.println("   " + price + "원\n-------------");
-                    }
-                }
-            } else if (category == 2) {
-                System.out.println("------------ 중식 ------------");
+        for (int category : categories) {
+            System.out.println("------------ " + getCategoryName(category) + " ------------");
+
+            List<Store> storesByCategory = storeRepository.findStoreCategory(category);
+
+            if (storesByCategory.isEmpty()) {
+                System.out.println("해당 카테고리 주문 내역이 없습니다.");
+            } else {
                 int cnt = 1;
-                if (storesByCategory.isEmpty()) {
-                    System.out.println("해당 카테고리 주문 내역이 없습니다.");
-                } else {
-                    for (Store store : storesByCategory) {
+                for (Store store : storesByCategory) {
+                    // 각 가게가 여러 카테고리에 속할 수 있으므로, 해당 가게가 속한 모든 카테고리를 출력
+                    List<Integer> storeCategories = store.getStoreCategories();
+                    if (storeCategories.contains(category)) {
+                        System.out.println((cnt++) + ". " + store.getStoreName());
                         FoodRepository foodRepository = FoodRepository.getInstance();
                         List<Food> foodsInStore = foodRepository.findFoodsStoreName(store.getStoreName());
-                        System.out.println((cnt++) + ". " + store.getStoreName());
-                        int price = 0;
-                        for (Food food : foodsInStore) {
-                            System.out.println("   " + food.getFoodName() + " " + food.getFoodQuantity());
-                            price += food.getFoodPrice() * food.getFoodQuantity();
-                        }
-                        System.out.println("   " + price + "원\n-------------");
-                    }
-                }
-            } else { // category == 3, 즉 일식
-                System.out.println("------------ 일식 ------------");
-                int cnt = 1;
-                if (storesByCategory.isEmpty()) {
-                    System.out.println("해당 카테고리 주문 내역이 없습니다.");
-                } else {
-                    for (Store store : storesByCategory) {
-                        FoodRepository foodRepository = FoodRepository.getInstance();
-                        List<Food> foodsInStore = foodRepository.findFoodsStoreName(store.getStoreName());
-                        System.out.println((cnt++) + ". " + store.getStoreName());
+
                         int price = 0;
                         for (Food food : foodsInStore) {
                             System.out.println("   " + food.getFoodName() + " " + food.getFoodQuantity());
@@ -626,5 +592,15 @@ public class OrderManeger {
             }
         }
     }
+
+    private static String getCategoryName(int category) {
+        switch (category) {
+            case 1: return "한식";
+            case 2: return "중식";
+            case 3: return "일식";
+            default: return "알 수 없는 카테고리";
+        }
+    }
+
 
 }

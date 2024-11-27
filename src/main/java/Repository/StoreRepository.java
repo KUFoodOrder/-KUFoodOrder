@@ -35,7 +35,7 @@ public class StoreRepository {
     public List<Store> findStoreCategory(int category) {
         List<Store> matchedStores = new ArrayList<>();
         for (Store store : stores.values()) {
-            if (store.getStoreCategory() == category) { // 카테고리가 일치하는 경우
+            if (store.getStoreCategories().contains(category)) { // 카테고리가 일치하는 경우
                 matchedStores.add(store);
             }
         }

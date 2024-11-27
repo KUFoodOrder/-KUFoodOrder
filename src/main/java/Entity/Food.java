@@ -1,5 +1,6 @@
 package Entity;
 
+//가게마다 같은이름의 메뉴가 추가되는 로직이 생기면서 음식 같은지 확인할때 메뉴이름과 상품이 등록되어있는 가게이름으로 확인해야함
 public class Food {
 
     private Store store; //이 상품이 등록되어있는 가게

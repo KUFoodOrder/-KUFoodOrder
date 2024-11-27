@@ -120,7 +120,15 @@ public class CsvManager {
                 }
                 String[] array = line.split(",");
 
-                Store store = new Store(Integer.parseInt(array[0]), array[1],
+                // 카테고리 처리 (하나 이상의 카테고리일 수 있음)
+                String[] categories = array[0].split(":");
+                List<Integer> storeCategories = new ArrayList<>();
+                for (String category : categories) {
+                    storeCategories.add(Integer.parseInt(category));  // 카테고리 추가
+                }
+
+                // Store 객체 생성 (카테고리 리스트와 가게 이름, 위치)
+                Store store = new Store(storeCategories, array[1],
                         new Position(Integer.parseInt(array[2]), Integer.parseInt(array[3])));
 
                 // 메뉴 리스트 파싱 (콜론(:)으로 구분된 메뉴 이름)
@@ -162,7 +170,17 @@ public class CsvManager {
             for (Store store : storeRepository.findAll()) {
                 // 각 Store의 정보를 CSV 형식으로 변환
                 StringBuilder line = new StringBuilder();
-                line.append(store.getStoreCategory()).append(",")
+
+                // 카테고리 리스트를 콜론(:)으로 구분하여 추가
+                List<Integer> categories = store.getStoreCategories();  // 여러 카테고리를 가져옴
+                for (int i = 0; i < categories.size(); i++) {
+                    line.append(categories.get(i));
+                    if (i < categories.size() - 1) {
+                        line.append(":");
+                    }
+                }
+
+                line.append(",")
                         .append(store.getStoreName()).append(",")
                         .append(store.getStoreLocation().getX()).append(",")
                         .append(store.getStoreLocation().getY()).append(",");
@@ -185,57 +203,6 @@ public class CsvManager {
         }
     }
 
-    public void updateStoreCsv(Store store) {
-        Path path = Paths.get(storeCsvFileName);
-        List<String> updatedLines = new ArrayList<>();
-
-        try (BufferedReader reader = Files.newBufferedReader(path)) {
-            String line;
-            boolean isUpdated = false;
-
-            while ((line = reader.readLine()) != null) {
-                if (line.isEmpty()) {
-                    continue;  // 빈 줄 무시
-                }
-
-                String[] data = line.split(",");
-                String storeName = data[1];
-
-                if (storeName.equals(store.getStoreName())) {
-                    // 가게 이름 일치하면 바뀐정보 업데이트
-                    StringBuilder newLine = new StringBuilder();
-                    newLine.append(store.getStoreCategory()).append(",")
-                            .append(store.getStoreName()).append(",")
-                            .append(store.getStoreLocation().getX()).append(",")
-                            .append(store.getStoreLocation().getY()).append(",");
-
-                    // 메뉴 리스트를 ":"로 구분하여 추가
-                    List<Food> menuList = store.getStoreMenuList();
-                    for (int i = 0; i < menuList.size(); i++) {
-                        newLine.append(menuList.get(i).getFoodName());
-                        if (i < menuList.size() - 1) {
-                            newLine.append(":");
-                        }
-                    }
-                    updatedLines.add(newLine.toString());  // 수정된 데이터 추가
-                    isUpdated = true;
-                } else {
-                    updatedLines.add(line);  // 일치하지 않으면 기존 데이터 유지
-                }
-            }
-
-            if (!isUpdated) {
-                System.out.println("해당 가게를 찾을 수 없습니다.");
-                return;
-            }
-
-        } catch (IOException e) {
-            System.out.println("파일을 읽는 중 오류가 발생했습니다.");
-            return;
-        }
-
-    }
-
 
     public FoodRepository readFoodCsv() {
 
@@ -249,11 +216,21 @@ public class CsvManager {
                 }
                 String[] array = line.split(",");
 
-                Store store =new Store(Integer.parseInt(array[0]), array[1]);
+                // 가게의 여러 카테고리를 ":"로 구분하여 파싱
+                String[] categories = array[0].split(":");
+                List<Integer> storeCategories = new ArrayList<>();
+                for (String category : categories) {
+                    storeCategories.add(Integer.parseInt(category)); // 카테고리 값 저장
+                }
+
+                // Store 객체 생성 (여러 카테고리 지원)
+                Store store = new Store(storeCategories, array[1]); // 카테고리 목록 전달
+
                 Food food= new Food(store,Integer.parseInt(array[2]),array[3],
                         Integer.parseInt(array[4]),Integer.parseInt(array[5]));
 
-                foodRepository.addFood(food);
+                // 각 가게에 해당하는 음식 목록에 음식을 추가
+                foodRepository.addFood(store.getStoreName(),food);
 
             }
         } catch (FileNotFoundException e) {
@@ -277,7 +254,14 @@ public class CsvManager {
             for (Food food : foodRepository.findAll()) {
                 // 각 Food 객체의 정보를 CSV 형식으로 변환
                 StringBuilder line = new StringBuilder();
-                line.append(food.getStore().getStoreCategory()).append(",")  // 가게 카테고리
+
+                // 가게 카테고리가 여러 개일 수 있기 때문에, 이를 ":"로 구분하여 저장
+                List<Integer> storeCategories = food.getStore().getStoreCategories();
+                String categories = String.join(":", storeCategories.stream()
+                        .map(String::valueOf)
+                        .toArray(String[]::new));
+
+                line.append(categories).append(",")  // 가게 카테고리 (여러 개일 수 있음)
                         .append(food.getStore().getStoreName()).append(",")     // 가게 이름
                         .append(food.getFoodId()).append(",")                  // 음식 ID
                         .append(food.getFoodName()).append(",")                // 음식 이름
@@ -294,59 +278,6 @@ public class CsvManager {
         }
     }
 
-    public void updateFoodCsv(Food food) {
-        Path path = Paths.get(foodCsvFileName);
-        List<String> updatedLines = new ArrayList<>();
-
-        try (BufferedReader reader = Files.newBufferedReader(path)) {
-            String line;
-            boolean isUpdated = false;
-
-            while ((line = reader.readLine()) != null) {
-                if (line.isEmpty()) {
-                    continue;  // 빈 줄 무시
-                }
-
-                String[] data = line.split(",");
-                String foodName = data[3];
-
-                if (foodName.equals(food.getFoodName())) {
-                    // 음식이름이 일치하면 수정한 정보 업데이트
-                    StringBuilder newLine = new StringBuilder();
-                    newLine.append(food.getStore().getStoreCategory()).append(",")
-                            .append(food.getStore().getStoreName()).append(",")
-                            .append(food.getFoodId()).append(",")
-                            .append(food.getFoodName()).append(",")
-                            .append(food.getFoodPrice()).append(",")
-                            .append(food.getFoodQuantity());
-
-                    updatedLines.add(newLine.toString());  // 수정된 데이터 추가
-                    isUpdated = true;
-                } else {
-                    updatedLines.add(line);  // 일치하지 않으면 기존 데이터 유지
-                }
-            }
-
-            if (!isUpdated) {
-                System.out.println("해당 음식을 찾을 수 없습니다.");
-                return;
-            }
-
-        } catch (IOException e) {
-            System.out.println("파일을 읽는 중 오류가 발생했습니다.");
-            return;
-        }
-
-        // 업데이트된 내용을 다시 CSV 파일에 씀
-        try (BufferedWriter writer = Files.newBufferedWriter(path)) {
-            for (String updatedLine : updatedLines) {
-                writer.write(updatedLine);
-                writer.newLine();
-            }
-        } catch (IOException e) {
-            System.out.println("파일을 쓰는 중 오류가 발생했습니다.");
-        }
-    }
 
 
 
@@ -368,27 +299,29 @@ public class CsvManager {
                 User user = userRepository.findUserById(array[2]);
 
                 // 음식과 수량 리스트 초기화
+                List<Store> stores = new ArrayList<>();
                 List<Food> foods = new ArrayList<>();
                 List<Integer> quantities = new ArrayList<>();
 
                 // 음식과 수량 정보를 ":"로 분리하여 처리
                 for (int i = 3; i < array.length; i++) {  // 3번 인덱스부터 끝까지 반복
                     String[] foodQuantityPair = array[i].split(":");
-                    if (foodQuantityPair.length == 2) {
-                        Food food = foodRepository.findFoodByName(foodQuantityPair[0]);
-                        int quantity = Integer.parseInt(foodQuantityPair[1]);
-
+                    if (foodQuantityPair.length == 3) {
+                        Store store =storeRepository.findStoreName(foodQuantityPair[0]);
+                        Food food = foodRepository.findFoodByFoodName(store,foodQuantityPair[1]);
+                        int quantity = Integer.parseInt(foodQuantityPair[2]);
                         if (food != null) {
+                            stores.add(store);
                             foods.add(food);
                             quantities.add(quantity);
                         } else {
-                            System.out.println("음식 '" + foodQuantityPair[0] + "'을 찾을 수 없습니다.");
+                            System.out.println("음식 '" + foodQuantityPair[1] + "'을 찾을 수 없습니다.");
                         }
                     }
                 }
 
                 // Order 객체 생성 및 저장
-                Order order = new Order(orderTime, orderId, user, foods, quantities);
+                Order order = new Order(orderTime, orderId, user, stores,foods, quantities);
                 orderRepository.addOrder(order);
 
             }
@@ -420,9 +353,12 @@ public class CsvManager {
                 // 음식과 수량 리스트를 ":"로 구분하여 추가
                 List<Food> foods = order.getFoods();
                 List<Integer> quantities = order.getQuantitys();
+                List<Store> stores = order.getStores();
 
                 for (int i = 0; i < foods.size(); i++) {
-                    line.append(foods.get(i).getFoodName()).append(":").append(quantities.get(i));
+                    line.append(stores.get(i).getStoreName()).append(":")
+                            .append(foods.get(i).getFoodName())
+                            .append(":").append(quantities.get(i));
                     if (i < foods.size() - 1) {
                         line.append(",");  // 각 음식-수량 쌍 사이에 콤마 추가
                     }
