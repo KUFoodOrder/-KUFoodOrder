@@ -7,9 +7,13 @@ import manager.CsvManager;
 import manager.OrderManeger;
 import manager.RegexManager;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
+
 
 //사용자 객체
 public class User {
@@ -53,8 +57,12 @@ public class User {
     }
 
     public User() {
-        userRepository = csvManager.readUserCsv();
-        csvManager.writeUserCsv(userRepository);
+        String homeDir = System.getProperty("user.home");
+        Path userFilePath = Paths.get(homeDir, "userData.csv");
+        if (Files.notExists(userFilePath)) {
+            userRepository = csvManager.readUserCsv();
+            csvManager.writeUserCsv(userRepository);
+        }
     }
 
 //    public User(String time) {
@@ -177,7 +185,7 @@ public class User {
     public String user_Login(String time) {
         int x = 0, y = 0;
         Scanner sc = new Scanner(System.in);
-        csvManager.readUserCsv();
+        csvManager.home_readUserCsv();
         String uid;
         String upwd;
         System.out.println("사용자 로그인 메뉴로 돌아가려면 'q'를 누르세요.\n");

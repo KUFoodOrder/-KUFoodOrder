@@ -1,10 +1,14 @@
 package manager;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Scanner;
 import Entity.*;
 import Repository.FoodRepository;
 import Repository.OrderRepository;
 import Repository.StoreRepository;
+import Repository.UserRepository;
 
 
 public class MenuManager {
@@ -30,13 +34,25 @@ public class MenuManager {
         //프로그램 실행하면
         //가게정보,주문정보,음식정보,유저정보
         //기존파일에있던거 불러와서 다시써야댐
+
+        // 사용자 홈 디렉토리에 저장할 파일 경로 설정
+        String homeDir = System.getProperty("user.home");
+        Path foodFilePath = Paths.get(homeDir, "foodData.csv");
+        Path storeFilePath = Paths.get(homeDir, "storeData.csv");
+        Path orderFilePath = Paths.get(homeDir, "orderData.csv");
+
+        // CSV 파일이 없을 경우에만 데이터를 복사
         User user = new User();
-        FoodRepository foodRepository = csvManager.readFoodCsv();
-        StoreRepository storeRepository= csvManager.readStoreCsv();
-        OrderRepository orderRepository = csvManager.readOrderCsv();
-        csvManager.writeFoodCsv(foodRepository);
-        csvManager.writeOrderCsv(orderRepository);
-        csvManager.writeStoreCsv(storeRepository);
+        if (Files.notExists(foodFilePath) || Files.notExists(storeFilePath) || Files.notExists(orderFilePath)) {
+            FoodRepository foodRepository = csvManager.readFoodCsv();
+            StoreRepository storeRepository = csvManager.readStoreCsv();
+            OrderRepository orderRepository = csvManager.readOrderCsv();
+
+            // 초기 데이터만 CSV로 저장
+            csvManager.writeFoodCsv(foodRepository);
+            csvManager.writeOrderCsv(orderRepository);
+            csvManager.writeStoreCsv(storeRepository);
+        }
 
 
         while (true) {
