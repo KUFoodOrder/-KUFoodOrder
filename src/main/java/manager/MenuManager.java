@@ -18,13 +18,18 @@ public class MenuManager {
 
     public static void showMenu() {
         Scanner scanner = new Scanner(System.in);
-        String date = getDateFromUser(scanner);
-        String time = getTimeFromUser(scanner);
-        time=date+time;
-        System.out.println("사용자가 입력한 날짜와 시간은 " + RegexManager.formatDateTime(time)+"입니다.");
+        String time=null;
+        while (true) {
+            String date = getDateFromUser(scanner);
+            time = getTimeFromUser(scanner);
+            time=date+time;
+            System.out.println("사용자가 입력한 날짜와 시간은 " + RegexManager.formatDateTime(time)+"입니다.");
 
-        //파일 싱크맞추는거 2차구현때
-        //csvManager.timeSynchronize(time);
+            //파일 싱크맞추는거 2차구현때
+            if (csvManager.timeSynchronize(time)) {
+                break;
+            }
+        }
         mainMenu(scanner, time);
     }
 
@@ -98,7 +103,7 @@ public class MenuManager {
                         }
                         else {
                             while (true) {
-                                if (3 == OrderManeger.Print_User_Main_Menu(time, uid)) break;        //고객 메인 메뉴 출력
+                                if (4 == OrderManeger.Print_User_Main_Menu(time, uid)) break;        //고객 메인 메뉴 출력
                             }
                         }
                         break;

@@ -10,6 +10,9 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.List;
 
@@ -376,43 +379,78 @@ public class CsvManager {
 
 
     //싱크맞추는부분
-//    public void timeSynchronize(String time) {
-//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
-//        LocalDateTime givenTime = LocalDateTime.parse(time, formatter);
-//
-//        List<Order> orders = readSeatCsv();
-//        Set<Integer> resetSeats = new HashSet<>();
-//
-//        try (BufferedWriter writer = new BufferedWriter(new FileWriter(seatCsvFileName))) {
-//            for (Order order : orders) {
-//                LocalDateTime startTime = null;
-//                LocalDateTime endTime = null;
-//
-//                try {
-//                    startTime = LocalDateTime.parse(seat.getorderTime(), formatter);
-//                } catch (DateTimeParseException e) {
-//                    // Handle invalid date format
-//                }
-//
-//                try {
-//                    endTime = LocalDateTime.parse(seat.getEndTime(), formatter);
-//                } catch (DateTimeParseException e) {
-//                    // Handle invalid date format
-//                }
-//
-//                if (startTime == null || endTime == null || givenTime.isBefore(startTime) || givenTime.isAfter(endTime)) {
-//                    writer.write(seat.getSeatNum() + ",0,000000000000,000000000000");
-//                    resetSeats.add(seat.getSeatNum());
-//                } else {
-//                    writer.write(seat.getSeatNum() + "," + (seat.getUsing() ? "1" : "0") + "," + seat.getStartTime() + "," + seat.getEndTime());
-//                }
-//                writer.newLine();
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-//        userCsvTimeSynchronize(resetSeats);
-    //  }
+    //가장 최근 주문 기록보다 이른 시간을 입력하면 일시/시간을 다시 입력 받게 함.
+    //가장 최근 주문 기록과 같거나 그 이후의 시간만 허용
+    public boolean timeSynchronize(String time) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+        LocalDateTime currentMostRecent = null;
+
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                getClass().getResourceAsStream(orderCsvFileName)))) {
+            String line;
+
+            while ((line = br.readLine()) != null) {
+                if (line.isEmpty()) {
+                    continue; // 빈 줄 무시
+                }
+
+                String[] array = line.split(",");
+                String orderTimeStr = array[0];
+
+                try {
+                    LocalDateTime orderTime = LocalDateTime.parse(orderTimeStr, formatter);
+
+                    // 가장 최근 일시 업데이트
+                    if (currentMostRecent == null || orderTime.isAfter(currentMostRecent)) {
+                        currentMostRecent = orderTime;
+                    }
+                } catch (DateTimeParseException e) {
+                    System.out.println("유효하지 않은 날짜 형식: " + orderTimeStr);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        String most_cur_time = null;
+
+        // orderData.csv 중 가장 최근 시간을 most_cur_time에 저장
+        if (currentMostRecent != null) {
+            most_cur_time = currentMostRecent.format(formatter);
+        } else {
+            System.out.println("유효한 데이터가 없습니다.");
+        }
+
+        //System.out.println("Most_cur_time is " + most_cur_time);
+
+        // 사용자 입력 시간을 LocalDateTime으로 변환
+        LocalDateTime userTime;
+        try {
+            userTime = LocalDateTime.parse(time, formatter);
+        } catch (DateTimeParseException e) {
+            System.out.println("유효하지 않은 사용자 입력 시간 형식: " + time);
+            return false;
+        }
+
+        // 비교 로직
+        if (currentMostRecent != null && userTime.isBefore(currentMostRecent)) {
+            System.out.println("[경고!!!]\n사용자의 입력 시간이 과거입니다.\n가장 최근 주문 기록은 " + RegexManager.formatDateTime(currentMostRecent.format(formatter)) + "입니다.");
+            System.out.println("다시 입력해주세요.");
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    public void DeleteOrderCsv(List<String> updatedOrders) {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(orderCsvFileName))) {
+            for (String order : updatedOrders) {
+                bw.write(order);
+                bw.newLine();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
 }
