@@ -152,12 +152,13 @@ public class OrderManeger {
         }
 
         // 선택된 주문 제외하고 나머지 유지
+        String list_to_delete = ordersToCancel.get(selectedIndex - 1);  //삭제할 주문 내역 받아놓고
         ordersToCancel.remove(selectedIndex - 1);
         allOrders.addAll(ordersToCancel);
 
         // CsvManager를 이용해 파일 갱신
         csvManager.DeleteOrderCsv(allOrders);
-
+        csvManager.DeleteFoodCsv(list_to_delete);
         System.out.println("선택한 주문이 삭제되었습니다.");
     }
 
