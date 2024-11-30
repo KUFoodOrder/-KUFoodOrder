@@ -563,15 +563,19 @@ public class OrderManeger {
         String orderFilePath = Paths.get(homeDir, "orderData.csv").toString();
         String foodFilePath = Paths.get(homeDir, "foodData.csv").toString();
 
-        // 음식 데이터 읽기 (메뉴명과 가격을 매핑하는 해시맵 생성)
+        // 음식 데이터 읽기 (가게, 메뉴명과 가격을 매핑하는 해시맵 생성)
         Map<String, Integer> foodPrices = new HashMap<>();
         try (BufferedReader foodReader = new BufferedReader(new FileReader(foodFilePath))) {
             String line;
             while ((line = foodReader.readLine()) != null) {
                 String[] columns = line.split(",");
-                String foodName = columns[3];
-                int price = Integer.parseInt(columns[4]);
-                foodPrices.put(foodName, price);
+                String storeName = columns[1]; // 가게 이름
+                String foodName = columns[3]; // 메뉴 이름
+                int price = Integer.parseInt(columns[4]); // 가격
+
+                // 가게와 메뉴 이름을 결합하여 "가게:메뉴" 형식으로 키를 만들어 가격을 저장
+                String key = storeName + ":" + foodName;
+                foodPrices.put(key, price);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -593,14 +597,19 @@ public class OrderManeger {
                     System.out.println("아이디: " + userId);
                     System.out.println("주문 내역:");
 
+                    // 주문 항목 처리
                     for (int i = 3; i < columns.length; i++) {
                         String[] item = columns[i].split(":");
-                        String itemName = item[0];
-                        int quantity = Integer.parseInt(item[1]);
-                        int price = foodPrices.getOrDefault(itemName, 0); // 가격을 찾지 못할 경우 0으로 설정
+                        String storeName = item[0]; // 가게 이름
+                        String foodName = item[1]; // 메뉴 이름
+                        int quantity = Integer.parseInt(item[2]); // 수량
+
+                        // 가게와 메뉴를 결합하여 "가게:메뉴" 키로 가격을 조회
+                        String key = storeName + ":" + foodName;
+                        int price = foodPrices.getOrDefault(key, 0); // 가격을 찾지 못할 경우 0으로 설정
                         totalPrice += price * quantity;
 
-                        System.out.println("  " + itemName + " " + quantity + "개 - " + (price * quantity) + "원");
+                        System.out.println("  " + storeName + " - " + foodName + " " + quantity + "개 - " + (price * quantity) + "원");
                     }
                     System.out.println("합계: " + totalPrice + "원");
                     System.out.println();
@@ -614,6 +623,7 @@ public class OrderManeger {
             e.printStackTrace();
         }
     }
+
 
 
 
