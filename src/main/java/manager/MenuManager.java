@@ -1,8 +1,11 @@
 package manager;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Scanner;
 import Entity.*;
 import Repository.FoodRepository;
@@ -50,29 +53,52 @@ public class MenuManager {
         //TODO 파일존재할경우에도 데이터불러와서 레포지토리에 저장하도록 수정해야함
         // CSV 파일이 없을 경우에만 데이터를 복사
         User user = new User();
-        UserRepository userRepository = csvManager.readUserCsv();
-        FoodRepository foodRepository = csvManager.readFoodCsv();
-        StoreRepository storeRepository = csvManager.readStoreCsv();
-        OrderRepository orderRepository = csvManager.readOrderCsv();
-
-        // 초기 데이터만 CSV로 저장
-        csvManager.writeUserCsv(userRepository);
-        csvManager.writeFoodCsv(foodRepository);
-        csvManager.writeOrderCsv(orderRepository);
-        csvManager.writeStoreCsv(storeRepository);
-
+        UserRepository userRepository;
+        FoodRepository foodRepository;
+        StoreRepository storeRepository;
+        OrderRepository orderRepository;
         if (Files.notExists(foodFilePath) || Files.notExists(storeFilePath) || Files.notExists(orderFilePath)|| Files.notExists(userFilePath)) {
-//            UserRepository userRepository = csvManager.readUserCsv();
-//            FoodRepository foodRepository = csvManager.readFoodCsv();
-//            StoreRepository storeRepository = csvManager.readStoreCsv();
-//            OrderRepository orderRepository = csvManager.readOrderCsv();
-//
-//            // 초기 데이터만 CSV로 저장
-//            csvManager.writeUserCsv(userRepository);
-//            csvManager.writeFoodCsv(foodRepository);
-//            csvManager.writeOrderCsv(orderRepository);
-//            csvManager.writeStoreCsv(storeRepository);
+            userRepository = csvManager.readUserCsv();
+            foodRepository = csvManager.readFoodCsv();
+            storeRepository = csvManager.readStoreCsv();
+            orderRepository = csvManager.readOrderCsv();
+
+            // 초기 데이터만 CSV로 저장
+            csvManager.writeUserCsv(userRepository);
+            csvManager.writeFoodCsv(foodRepository);
+            csvManager.writeOrderCsv(orderRepository);
+            csvManager.writeStoreCsv(storeRepository);
         }
+        else {
+            // 원본 파일 경로
+            String[] fileNames = {"orderData.csv", "foodData.csv", "storeData.csv", "userData.csv"};
+            // 대상 경로
+            String resourceDir = Paths.get(System.getProperty("user.dir"), "src", "main", "resources").toString();
+
+            // resource 폴더가 존재하지 않으면 생성하거나 덮어씌우기
+            File resourceFolder = new File(resourceDir);
+            if (!resourceFolder.exists()) {
+                resourceFolder.mkdirs();
+            }
+
+            // 각 파일 읽어서 resource 폴더에 복사
+            for (String fileName : fileNames) {
+                Path sourcePath = Paths.get(homeDir, fileName);
+                Path destinationPath = Paths.get(resourceDir, fileName);
+
+                // 파일 복사
+                try {
+                    Files.copy(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
+                    //System.out.println(fileName + " 파일이 " + resourceDir + " 폴더로 복사되었습니다.");
+                } catch (IOException e) {
+                    System.err.println("파일 복사 실패: " + fileName);
+                    e.printStackTrace();
+                }
+            }
+        }
+
+
+
 
 
         while (true) {
