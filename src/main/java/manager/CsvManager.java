@@ -443,7 +443,9 @@ public class CsvManager {
     }
 
     public void DeleteOrderCsv(List<String> updatedOrders) {
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(orderCsvFileName))) {
+        String homeDir = System.getProperty("user.home");
+        Path path = Paths.get(homeDir, "orderData.csv");
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(path.toString()))) {
             for (String order : updatedOrders) {
                 bw.write(order);
                 bw.newLine();
@@ -451,6 +453,8 @@ public class CsvManager {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        MenuManager.Synchronize_csv_home_to_resource();
     }
 
 }

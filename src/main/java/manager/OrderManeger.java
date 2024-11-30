@@ -59,14 +59,14 @@ public class OrderManeger {
             check_order_history_from_User(id);
             return 2;
         } else if (userMainMenu_user_selected == 3) {
-            cancle_order(time);
+            cancle_order(time, id);
             return 3;
         }
         else System.out.println("로그아웃합니다");
         return 4;
     }
 
-    private static void cancle_order(String time) {
+    private static void cancle_order(String time, String id) {
         System.out.println("------------[유의 사항]------------");
         System.out.println("10분 이내 주문 내역만 취소가 가능합니다.");
         System.out.println("------------[유의 사항]------------");
@@ -82,8 +82,14 @@ public class OrderManeger {
         List<String> allOrders = new ArrayList<>();
         List<String> ordersToCancel = new ArrayList<>();
 
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(
-                OrderManeger.class.getResourceAsStream(csvManager.orderCsvFileName)))) {
+
+
+        // 사용자 홈 디렉토리에 있는 파일 경로
+        String homeDir = System.getProperty("user.home");
+        String orderFilePath = Paths.get(homeDir, "orderData.csv").toString();
+        String foodFilePath = Paths.get(homeDir, "foodData.csv").toString();
+
+        try (BufferedReader br = new BufferedReader(new FileReader(orderFilePath))) {
             String line;
 
             while ((line = br.readLine()) != null) {
@@ -93,14 +99,18 @@ public class OrderManeger {
 
                 String[] array = line.split(",");
                 String orderTimeStr = array[0];
-
+                //System.out.println("time is "+ array[0] + " 번호는 "+ array[1]);
+                if (!array[2].equals(id)) {//id 다르면 넘어가기
+                    continue;
+                }
                 try {
                     LocalDateTime orderTime = LocalDateTime.parse(orderTimeStr, formatter);
-
+                    String MyorderTimeStr = targetTime.format(DateTimeFormatter.ofPattern("yyyyMMddHHmm"));
                     // 10분 이내의 주문인지 확인
-                    if (!orderTime.isBefore(targetTime.minusMinutes(10)) && !orderTime.isAfter(targetTime.plusMinutes(10))) {
+                    if (MyorderTimeStr.equals(orderTimeStr) || (orderTime.isAfter(targetTime.minusMinutes(10)) && orderTime.isBefore(targetTime.plusMinutes(10))) ) {
                         ordersToCancel.add(line);
-                    } else {
+                    }
+                    else {
                         allOrders.add(line);
                     }
                 } catch (DateTimeParseException e) {
@@ -244,6 +254,7 @@ public class OrderManeger {
                 }
             }
             System.out.println("주문이 완료되었습니다. 엔터 키를 누르면 고객 메뉴로 돌아갑니다.");
+            MenuManager.Synchronize_csv_home_to_resource();
         } else {
             System.out.println("주문이 완료되지 않았습니다. 엔터 키를 누르면 고객 메뉴로 돌아갑니다.");
         }
