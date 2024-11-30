@@ -25,8 +25,11 @@ public class OrderManeger {
 
     static Scanner sc = new Scanner(System.in);
 
+    static String userId;
+    static String storeName;
+    static boolean delivery = false;
     public static int Print_User_Main_Menu(String time, String id) {
-
+        userId = id;
         int userMainMenu_user_selected = 0;
         while (true) {
             System.out.println("----------고객 메인 메뉴----------");
@@ -56,20 +59,32 @@ public class OrderManeger {
 
 
     public static void getOrderFromUser(String time, String id) {
+
         Confirmed_order.clear();
+
         int keep_order = 1;
         while (true) {
             int Category_user_selected = getCategoryFromUser();
             int Store_user_selected = getStoreFromUser(Category_user_selected);
+
             int Menu_user_selected = getMenuFromUser(Store_user_selected);
 
             int Quantity = Quantity_check();
 
             pushToConfirmed(Category_user_selected, Store_user_selected, Menu_user_selected, Quantity, keep_order);
 
-            keep_order = Keep_Order_Check(keep_order);
-            if (keep_order == 0) break;
-            keep_order++;
+            if(!delivery){  //배달 아닐때만
+                keep_order = Keep_Order_Check(keep_order);
+                if (keep_order == 0) break;
+                keep_order++;
+            }
+            else{
+                break;
+            }
+
+        }
+        if(delivery){
+            calculateDeliveryPay();
         }
 
         Print_Bill(Confirmed_order);
@@ -128,6 +143,8 @@ public class OrderManeger {
                     e.printStackTrace();
                 }
             }
+
+
             System.out.println("주문이 완료되었습니다. 엔터 키를 누르면 고객 메뉴로 돌아갑니다.");
         } else {
             System.out.println("주문이 완료되지 않았습니다. 엔터 키를 누르면 고객 메뉴로 돌아갑니다.");
@@ -136,8 +153,71 @@ public class OrderManeger {
         sc.nextLine();
     }
 
+    //TODO 배달 기능 구현
+    // 최근 일정 기간 동안의 주문액이 일정 이상이면, 붙을 배달료가 면제되거나 거부될 배달이 (배달료는 붙여서) 수락되게
+
+
+    //TODO 배달료 계산
+    // 가게 위치와 주문자 위치 간의 직선거리에 따라, 일정 이상 멀면 배달료가 붙고, 더 멀면 아예 배달이 거부되게
+    private static void calculateDeliveryPay() {
+        UserRepository userRepository =  csvManager.readUserCsv();
+
+        User user = userRepository.findUserById(userId);
+        Position userPosition = user.getUserLocation();
+
+        StoreRepository storeRepository = csvManager.readStoreCsv();
+        Store store = storeRepository.findStoreName(storeName);
+        Position storePosition = store.getStoreLocation();
+
+        int deliveryPay = 1000; //배달료 1000원으로
+        // 좌표 사이의 거리 계산
+        double distance = Math.sqrt(Math.pow(userPosition.getX() - storePosition.getX(), 2) +
+                Math.pow(userPosition.getY() - storePosition.getY(), 2));
+
+        // 거리 기준에 따라 배달 가능 여부 및 배달료 설정
+        if (distance <= 1000.0) {  // 1000 이하이면
+            System.out.println("배달이 가능합니다.");
+            System.out.println("배달료는 무료입니다.");
+//            System.out.println("배달 가능 (배달료 없음). 거리: " + distance);
+        } else if (distance > 1000.0 && distance <= 4000.0) { // 1001~4000
+            System.out.println("배달이 가능합니다.");
+//            System.out.println("배달 가능 (배달료 있음). 거리: " + distance);
+            System.out.println("배달료: " + deliveryPay);
+        } else { // 4000 초과
+            System.out.println("거리가 멀어서 배달이 불가능합니다.");
+//            System.out.println("배달 불가능. 거리: " + distance);
+        }
+    }
+
+
+
+    private static boolean isDelivery() {
+        int userSelected = 0;
+        while (true) {
+            System.out.println("주문 방식을 선택해주세요.");
+            System.out.println("1. 매장에서 먹기");
+            System.out.println("2. 배달하기");
+            System.out.println("--------------------------------");
+            System.out.println("번호를 입력해주세요.");
+            System.out.print("> ");
+
+            String input = sc.nextLine().trim();
+            if (regexManager.checkMenu(input, 2)) {
+                userSelected = Integer.parseInt(input);
+                break;
+            }
+        }
+        if (userSelected == 1) {
+            System.out.println("매장에서 먹기를 선택하셨습니다.");
+            return false;
+        } else {
+            System.out.println("배달하기를 선택하셨습니다.");
+            return true;
+        }
+    }
 
     private static int getCategoryFromUser() {
+
         Scanner sc = new Scanner(System.in);
         while (true) {
             Print_Category();
@@ -154,6 +234,7 @@ public class OrderManeger {
 
     //카테고리 출력
     private static void Print_Category() {
+        delivery = isDelivery();
         System.out.println("----------고객 카테고리 입장----------");
         System.out.println("1. 한식");
         System.out.println("2. 중식");
@@ -171,6 +252,9 @@ public class OrderManeger {
             input = input.trim();
             if (regexManager.checkMenu(input, List_Store.size())) {
                 int Store_user_selected = Integer.parseInt(input);
+
+                //선택된 가게의 이름을 storeName에 저장
+                storeName = List_Store.get(Store_user_selected - 1).get(1);
                 System.out.println(Store_user_selected + "번을 선택하셨습니다.");
                 return Store_user_selected;
             }
@@ -198,6 +282,7 @@ public class OrderManeger {
                         store.getStoreName()
                 );
                 List_Store.add(storeInfo);
+
             }
         }
 
@@ -282,6 +367,7 @@ public class OrderManeger {
         else if (Category_user_selected == 2) System.out.print("중식 카테고리의 ");
         else System.out.print("일식 카테고리의 ");
         System.out.println(Confirmed_order.get(keep_order - 1).get(1) + " 가게의 " + Confirmed_order.get(keep_order - 1).get(2) + "을 " + Confirmed_order.get(keep_order - 1).get(3) + "개 선택하셨습니다.");
+
     }
 
     //메뉴 비용 확인
@@ -299,6 +385,7 @@ public class OrderManeger {
     }
 
     private static int Keep_Order_Check(int keep_order) {
+
         System.out.println("메뉴를 추가 주문하시겠습니까?");
         System.out.print("[Y/N]");
         Scanner sc = new Scanner(System.in);
@@ -434,7 +521,6 @@ public class OrderManeger {
     }
 
 
-
     public static void check_order_history_from_Admin() {
         // 사용자 홈 디렉토리에 있는 파일 경로
         String homeDir = System.getProperty("user.home");
@@ -497,7 +583,6 @@ public class OrderManeger {
             System.out.println();
         }
     }
-
 
 
     public static int Print_Admin_Main_Menu(String time) {
@@ -595,10 +680,14 @@ public class OrderManeger {
 
     private static String getCategoryName(int category) {
         switch (category) {
-            case 1: return "한식";
-            case 2: return "중식";
-            case 3: return "일식";
-            default: return "알 수 없는 카테고리";
+            case 1:
+                return "한식";
+            case 2:
+                return "중식";
+            case 3:
+                return "일식";
+            default:
+                return "알 수 없는 카테고리";
         }
     }
 

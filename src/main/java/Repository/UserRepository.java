@@ -3,12 +3,16 @@ package Repository;
 import java.util.Collection;
 import java.util.HashMap;
 import Entity.*;
+import manager.CsvManager;
+
 import java.util.Map;
 
 public class UserRepository {
 
     private final Map<String, User> users = new HashMap<>();
     private static UserRepository memoryUserRepository;
+
+    static CsvManager csvManager = new CsvManager();
 
     private UserRepository() {
     }
