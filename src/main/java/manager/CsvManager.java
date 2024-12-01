@@ -10,6 +10,9 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.List;
 
@@ -376,43 +379,160 @@ public class CsvManager {
 
 
     //싱크맞추는부분
-//    public void timeSynchronize(String time) {
-//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
-//        LocalDateTime givenTime = LocalDateTime.parse(time, formatter);
-//
-//        List<Order> orders = readSeatCsv();
-//        Set<Integer> resetSeats = new HashSet<>();
-//
-//        try (BufferedWriter writer = new BufferedWriter(new FileWriter(seatCsvFileName))) {
-//            for (Order order : orders) {
-//                LocalDateTime startTime = null;
-//                LocalDateTime endTime = null;
-//
-//                try {
-//                    startTime = LocalDateTime.parse(seat.getorderTime(), formatter);
-//                } catch (DateTimeParseException e) {
-//                    // Handle invalid date format
-//                }
-//
-//                try {
-//                    endTime = LocalDateTime.parse(seat.getEndTime(), formatter);
-//                } catch (DateTimeParseException e) {
-//                    // Handle invalid date format
-//                }
-//
-//                if (startTime == null || endTime == null || givenTime.isBefore(startTime) || givenTime.isAfter(endTime)) {
-//                    writer.write(seat.getSeatNum() + ",0,000000000000,000000000000");
-//                    resetSeats.add(seat.getSeatNum());
-//                } else {
-//                    writer.write(seat.getSeatNum() + "," + (seat.getUsing() ? "1" : "0") + "," + seat.getStartTime() + "," + seat.getEndTime());
-//                }
-//                writer.newLine();
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-//        userCsvTimeSynchronize(resetSeats);
-    //  }
+    //가장 최근 주문 기록보다 이른 시간을 입력하면 일시/시간을 다시 입력 받게 함.
+    //가장 최근 주문 기록과 같거나 그 이후의 시간만 허용
+    public boolean timeSynchronize(String time) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+        LocalDateTime currentMostRecent = null;
+
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                getClass().getResourceAsStream(orderCsvFileName)))) {
+            String line;
+
+            while ((line = br.readLine()) != null) {
+                if (line.isEmpty()) {
+                    continue; // 빈 줄 무시
+                }
+
+                String[] array = line.split(",");
+                String orderTimeStr = array[0];
+
+                try {
+                    LocalDateTime orderTime = LocalDateTime.parse(orderTimeStr, formatter);
+
+                    // 가장 최근 일시 업데이트
+                    if (currentMostRecent == null || orderTime.isAfter(currentMostRecent)) {
+                        currentMostRecent = orderTime;
+                    }
+                } catch (DateTimeParseException e) {
+                    System.out.println("유효하지 않은 날짜 형식: " + orderTimeStr);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        String most_cur_time = null;
+
+        // orderData.csv 중 가장 최근 시간을 most_cur_time에 저장
+        if (currentMostRecent != null) {
+            most_cur_time = currentMostRecent.format(formatter);
+        } else {
+            System.out.println("유효한 데이터가 없습니다.");
+        }
+
+        //System.out.println("Most_cur_time is " + most_cur_time);
+
+        // 사용자 입력 시간을 LocalDateTime으로 변환
+        LocalDateTime userTime;
+        try {
+            userTime = LocalDateTime.parse(time, formatter);
+        } catch (DateTimeParseException e) {
+            System.out.println("유효하지 않은 사용자 입력 시간 형식: " + time);
+            return false;
+        }
+
+        // 비교 로직
+        if (currentMostRecent != null && userTime.isBefore(currentMostRecent)) {
+            System.out.println("[경고!!!]\n사용자의 입력 시간이 과거입니다.\n가장 최근 주문 기록은 " + RegexManager.formatDateTime(currentMostRecent.format(formatter)) + "입니다.");
+            System.out.println("다시 입력해주세요.");
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    public void DeleteOrderCsv(List<String> updatedOrders) {
+        String homeDir = System.getProperty("user.home");
+        Path path = Paths.get(homeDir, "orderData.csv");
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(path.toString()))) {
+            for (String order : updatedOrders) {
+                bw.write(order);
+                bw.newLine();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        MenuManager.Synchronize_csv_home_to_resource();
+    }
+
+    public void DeleteFoodCsv(String orderDetails) {
+        // 사용자 홈 디렉토리에 있는 파일 경로
+        String homeDir = System.getProperty("user.home");
+        String foodFilePath = Paths.get(homeDir, "foodData.csv").toString();
+
+        // 주문 내역 파싱 (주문 내역 예시: 202410311820,0008,kang,가람성:짬뽕:1,가람성:짬뽕:1,가람성:볶음밥:1)
+        String[] orderArray = orderDetails.split(",");
+        int count = orderArray.length - 3;  //반복해야하는 횟수
+        System.out.println("###"+count);
+
+        // foodData.csv 파일을 읽어들일 맵
+        List<String> updatedFoodData = new ArrayList<>();
+        boolean foundMatch = false;
+
+        try (BufferedReader br = new BufferedReader(new FileReader(foodFilePath))) {
+            String line;
+            for (int i=0; i<count; i++) {
+                String[] orderedItems = orderArray[3+i].split(":");
+
+                while ((line = br.readLine()) != null) {
+                    if (line.isEmpty()) {
+                        continue; // 빈 줄 무시
+                    }
+
+                    String[] foodData = line.split(",");
+                    String storeName = foodData[1];  // foodData.csv의 가게 이름
+                    String menuName = foodData[3];   // foodData.csv의 메뉴 이름
+                    int currentQuantity = Integer.parseInt(foodData[5]);  // 현재 수량
+//시이발 왜 안돼
+                    // 주문 내역을 하나씩 확인하며 일치하는 항목을 찾아 수량을 차감
+
+                        int orderedQuantity = Integer.parseInt(orderedItems[2]);
+
+                        // 가게와 메뉴 이름이 일치하는지 확인
+                        if (storeName.equals(orderedItems[0]) && menuName.equals(orderedItems[1])) {
+                            // 일치하는 항목이 있으면 수량을 차감
+                            currentQuantity -= orderedQuantity;
+
+                            // 수량이 0보다 작아지지 않도록 처리
+                            if (currentQuantity < 0) {
+                                currentQuantity = 0;
+                            }
+
+                            // 일치한 항목에 대해 수정된 수량을 기록
+                            foodData[5] = String.valueOf(currentQuantity);
+                            foundMatch = true;
+                        }
+
+
+                    // 수정된 행을 updatedFoodData에 추가
+                    updatedFoodData.add(String.join(",", foodData));
+
+
+                }
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        // 수정된 내용으로 foodData.csv를 갱신
+        if (foundMatch) {
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(foodFilePath))) {
+                for (String updatedLine : updatedFoodData) {
+                    bw.write(updatedLine);
+                    bw.newLine();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("주문 내역에 해당하는 가게나 메뉴가 없습니다.");
+        }
+        MenuManager.Synchronize_csv_home_to_resource();
+    }
+
 
 }

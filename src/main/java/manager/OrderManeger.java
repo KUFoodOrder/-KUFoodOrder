@@ -6,7 +6,11 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+
 import java.time.temporal.ChronoUnit;
+
+import java.time.format.DateTimeParseException;
+
 import java.util.*;
 
 import Entity.*;
@@ -32,8 +36,11 @@ public class OrderManeger {
     static String storeName;
     private static String currentOrderTime;
     static boolean delivery = false;
+
     private static boolean canOrder = true;
     private static boolean checkMoreOrder = false;
+
+
 
     public static int Print_User_Main_Menu(String time, String id) {
         userId = id;
@@ -44,15 +51,16 @@ public class OrderManeger {
             System.out.println("----------고객 메인 메뉴----------");
             System.out.println("1. 카테고리 선택");
             System.out.println("2. 주문내역 확인");
-            System.out.println("3. 로그아웃");
+            System.out.println("3. 주문 취소");
+            System.out.println("4. 로그아웃");
             System.out.println("--------------------------------");
             System.out.println("고객 메인 메뉴 번호를 입력해주세요.");
             System.out.print(">");
 
-            String input = sc.nextLine().trim();
+            String input = sc.nextLine();
+            input = input.trim();
+            if (regexManager.checkMenu(input, 4)) {
 
-            // 유효한 메뉴 번호인지 확인
-            if (regexManager.checkMenu(input, 3)) {
                 userMainMenu_user_selected = Integer.parseInt(input);
                 System.out.println(userMainMenu_user_selected + "번을 선택하셨습니다.");
 
@@ -74,20 +82,133 @@ public class OrderManeger {
                 System.out.println("올바른 메뉴 번호를 입력해주세요.");
             }
         }
+
+        if (userMainMenu_user_selected == 1) {
+            getOrderFromUser(time, id);
+            return 1;
+        } else if (userMainMenu_user_selected == 2) {
+            check_order_history_from_User(id);
+            return 2;
+        } else if (userMainMenu_user_selected == 3) {
+            cancle_order(time, id);
+            return 3;
+        }
+        else System.out.println("로그아웃합니다");
+        return 4;
+
     }
+
+    private static void cancle_order(String time, String id) {
+        System.out.println("------------[유의 사항]------------");
+        System.out.println("10분 이내 주문 내역만 취소가 가능합니다.");
+        System.out.println("------------[유의 사항]------------");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+        LocalDateTime targetTime;
+        try {
+            targetTime = LocalDateTime.parse(time, formatter);
+        } catch (DateTimeParseException e) {
+            System.out.println("유효하지 않은 시간 형식: " + time);
+            return;
+        }
 
 
     public static void getOrderFromUser(String time, String id) {
         currentOrderTime = time;
         Confirmed_order.clear();
 
+        List<String> allOrders = new ArrayList<>();
+        List<String> ordersToCancel = new ArrayList<>();
+
+
+
+
+        // 사용자 홈 디렉토리에 있는 파일 경로
+        String homeDir = System.getProperty("user.home");
+        String orderFilePath = Paths.get(homeDir, "orderData.csv").toString();
+        String foodFilePath = Paths.get(homeDir, "foodData.csv").toString();
+
+        try (BufferedReader br = new BufferedReader(new FileReader(orderFilePath))) {
+            String line;
+
+            while ((line = br.readLine()) != null) {
+                if (line.isEmpty()) {
+                    continue; // 빈 줄 무시
+                }
+
+                String[] array = line.split(",");
+                String orderTimeStr = array[0];
+                //System.out.println("time is "+ array[0] + " 번호는 "+ array[1]);
+                if (!array[2].equals(id)) {//id 다르면 넘어가기
+                    continue;
+                }
+                try {
+                    LocalDateTime orderTime = LocalDateTime.parse(orderTimeStr, formatter);
+                    String MyorderTimeStr = targetTime.format(DateTimeFormatter.ofPattern("yyyyMMddHHmm"));
+                    // 10분 이내의 주문인지 확인
+                    if (MyorderTimeStr.equals(orderTimeStr) || (orderTime.isAfter(targetTime.minusMinutes(10)) && orderTime.isBefore(targetTime.plusMinutes(10))) ) {
+                        ordersToCancel.add(line);
+                    }
+                    else {
+                        allOrders.add(line);
+                    }
+                } catch (DateTimeParseException e) {
+                    System.out.println("유효하지 않은 날짜 형식: " + orderTimeStr);
+                    allOrders.add(line); // 날짜 형식이 유효하지 않은 데이터는 그대로 유지
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        // 출력: 10분 이내의 주문
+        System.out.println("10분 이내의 주문:");
+        for (int i = 0; i < ordersToCancel.size(); i++) {
+            System.out.println((i + 1) + ". " + ordersToCancel.get(i));
+        }
+
+        if (ordersToCancel.isEmpty()) {
+            System.out.println("삭제 가능한 주문이 없습니다.\n");
+            return;
+        }
+
+        // 사용자로부터 삭제할 주문 선택
+        System.out.print("삭제할 주문의 번호를 선택하세요: ");
+        Scanner scanner = new Scanner(System.in);
+        int selectedIndex = -1;
+
+        try {
+            selectedIndex = scanner.nextInt();
+        } catch (Exception e) {
+            System.out.println("잘못된 입력입니다.");
+            return;
+        }
+
+        if (selectedIndex < 1 || selectedIndex > ordersToCancel.size()) {
+            System.out.println("잘못된 번호입니다.");
+            return;
+        }
+
+        // 선택된 주문 제외하고 나머지 유지
+        String list_to_delete = ordersToCancel.get(selectedIndex - 1);  //삭제할 주문 내역 받아놓고
+        ordersToCancel.remove(selectedIndex - 1);
+        allOrders.addAll(ordersToCancel);
+
+        // CsvManager를 이용해 파일 갱신
+        csvManager.DeleteOrderCsv(allOrders);
+        csvManager.DeleteFoodCsv(list_to_delete);
+        System.out.println("선택한 주문이 삭제되었습니다.");
+    }
+
+
+    public static void getOrderFromUser(String time, String id) {
+        Confirmed_order.clear();
         int keep_order = 1;
         canOrder = true;
         checkMoreOrder = false;
         while (true) {
             int Category_user_selected = getCategoryFromUser();
             int Store_user_selected = getStoreFromUser(Category_user_selected);
-
             int Menu_user_selected = getMenuFromUser(Store_user_selected);
 
             int Quantity = Quantity_check();
@@ -115,16 +236,23 @@ public class OrderManeger {
 
         Print_Bill(Confirmed_order);
 
+        //orderData.csv랑 foodData.csv 수정
         if (1 == getConfirmFromUser()) {
+            //orderData.csv에 집어넣기 양식은 time, 주문번호, id, 가게:메뉴:수량, 가게:메뉴:수량, 가게:메뉴:수량 ..... 이런식으로 쭉
+            // 주문번호 생성
             String cur_max = check_max();
 
+            // 메뉴 항목을 "가게:메뉴:수량" 형식으로 구성
             StringBuilder menuItems = new StringBuilder();
             for (int i = 0; i < Confirmed_order.size(); i++) {
                 List<String> row = Confirmed_order.get(i);
-                String menuItem = row.get(2) + ":" + row.get(3);
+                String store = row.get(1); // 가게 이름
+                String menu = row.get(2); // 메뉴 이름
+                String quantity = row.get(3); // 수량
+                String menuItem = store + ":" + menu + ":" + quantity;
                 menuItems.append(menuItem);
                 if (i < Confirmed_order.size() - 1) {
-                    menuItems.append(",");
+                    menuItems.append(","); // 여러 항목 구분
                 }
             }
 
@@ -139,9 +267,11 @@ public class OrderManeger {
                 e.printStackTrace();
             }
 
+            //foodData.csv에서 가게 이름, 메뉴 이름 비교 후 해당 메뉴 수량 증가
             String foodFilePath = Paths.get(homeDir, "foodData.csv").toString();
             for (int i = 0; i < Confirmed_order.size(); i++) {
                 String targetMenu = Confirmed_order.get(i).get(2);
+                String targetStore = Confirmed_order.get(i).get(1);
                 int addQuantity = Integer.parseInt(Confirmed_order.get(i).get(3));
 
                 List<String[]> foodData = new ArrayList<>();
@@ -150,7 +280,7 @@ public class OrderManeger {
                     String new_line;
                     while ((new_line = br.readLine()) != null) {
                         String[] data = new_line.split(",");
-                        if (data[3].equals(targetMenu)) {
+                        if (data[3].equals(targetMenu) && data[1].equals(targetStore)) {
                             int currentQuantity = Integer.parseInt(data[5]);
                             data[5] = String.valueOf(currentQuantity + addQuantity);
                         }
@@ -169,17 +299,18 @@ public class OrderManeger {
                     e.printStackTrace();
                 }
             }
-
-
             System.out.println("주문이 완료되었습니다. 엔터 키를 누르면 고객 메뉴로 돌아갑니다.");
+
+            MenuManager.Synchronize_csv_home_to_resource();
 
         } else {
             System.out.println("주문이 완료되지 않았습니다. 엔터 키를 누르면 고객 메뉴로 돌아갑니다.");
         }
+
+        //종료 대기
         Scanner sc = new Scanner(System.in);
         sc.nextLine();
     }
-
 
     //TODO 배달 기능 구현
     // 최근 일정 기간 동안의 주문액이 일정 이상이면, 붙을 배달료가 면제되거나 거부될 배달이 (배달료는 붙여서) 수락되게
@@ -284,7 +415,6 @@ public class OrderManeger {
     }
 
     private static int getCategoryFromUser() {
-
         Scanner sc = new Scanner(System.in);
         while (true) {
             Print_Category();
@@ -352,7 +482,6 @@ public class OrderManeger {
                         store.getStoreName()
                 );
                 List_Store.add(storeInfo);
-
             }
         }
 
@@ -437,7 +566,6 @@ public class OrderManeger {
         else if (Category_user_selected == 2) System.out.print("중식 카테고리의 ");
         else System.out.print("일식 카테고리의 ");
         System.out.println(Confirmed_order.get(keep_order - 1).get(1) + " 가게의 " + Confirmed_order.get(keep_order - 1).get(2) + "을 " + Confirmed_order.get(keep_order - 1).get(3) + "개 선택하셨습니다.");
-
     }
 
     //메뉴 비용 확인
@@ -455,7 +583,6 @@ public class OrderManeger {
     }
 
     private static int Keep_Order_Check(int keep_order) {
-
         System.out.println("메뉴를 추가 주문하시겠습니까?");
         System.out.print("[Y/N]");
         Scanner sc = new Scanner(System.in);
@@ -538,15 +665,19 @@ public class OrderManeger {
         String orderFilePath = Paths.get(homeDir, "orderData.csv").toString();
         String foodFilePath = Paths.get(homeDir, "foodData.csv").toString();
 
-        // 음식 데이터 읽기 (메뉴명과 가격을 매핑하는 해시맵 생성)
+        // 음식 데이터 읽기 (가게, 메뉴명과 가격을 매핑하는 해시맵 생성)
         Map<String, Integer> foodPrices = new HashMap<>();
         try (BufferedReader foodReader = new BufferedReader(new FileReader(foodFilePath))) {
             String line;
             while ((line = foodReader.readLine()) != null) {
                 String[] columns = line.split(",");
-                String foodName = columns[3];
-                int price = Integer.parseInt(columns[4]);
-                foodPrices.put(foodName, price);
+                String storeName = columns[1]; // 가게 이름
+                String foodName = columns[3]; // 메뉴 이름
+                int price = Integer.parseInt(columns[4]); // 가격
+
+                // 가게와 메뉴 이름을 결합하여 "가게:메뉴" 형식으로 키를 만들어 가격을 저장
+                String key = storeName + ":" + foodName;
+                foodPrices.put(key, price);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -568,14 +699,19 @@ public class OrderManeger {
                     System.out.println("아이디: " + userId);
                     System.out.println("주문 내역:");
 
+                    // 주문 항목 처리
                     for (int i = 3; i < columns.length; i++) {
                         String[] item = columns[i].split(":");
-                        String itemName = item[0];
-                        int quantity = Integer.parseInt(item[1]);
-                        int price = foodPrices.getOrDefault(itemName, 0); // 가격을 찾지 못할 경우 0으로 설정
+                        String storeName = item[0]; // 가게 이름
+                        String foodName = item[1]; // 메뉴 이름
+                        int quantity = Integer.parseInt(item[2]); // 수량
+
+                        // 가게와 메뉴를 결합하여 "가게:메뉴" 키로 가격을 조회
+                        String key = storeName + ":" + foodName;
+                        int price = foodPrices.getOrDefault(key, 0); // 가격을 찾지 못할 경우 0으로 설정
                         totalPrice += price * quantity;
 
-                        System.out.println("  " + itemName + " " + quantity + "개 - " + (price * quantity) + "원");
+                        System.out.println("  " + storeName + " - " + foodName + " " + quantity + "개 - " + (price * quantity) + "원");
                     }
                     System.out.println("합계: " + totalPrice + "원");
                     System.out.println();
@@ -593,6 +729,8 @@ public class OrderManeger {
             e.printStackTrace();
         }
     }
+
+
 
 
     public static void check_order_history_from_Admin() {
@@ -657,6 +795,7 @@ public class OrderManeger {
             System.out.println();
         }
     }
+
 
 
     public static int Print_Admin_Main_Menu(String time) {

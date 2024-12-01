@@ -1,8 +1,11 @@
 package manager;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Scanner;
 import Entity.*;
 import Repository.FoodRepository;
@@ -18,57 +21,37 @@ public class MenuManager {
 
     public static void showMenu() {
         Scanner scanner = new Scanner(System.in);
-        String date = getDateFromUser(scanner);
-        String time = getTimeFromUser(scanner);
-        time=date+time;
-        System.out.println("사용자가 입력한 날짜와 시간은 " + RegexManager.formatDateTime(time)+"입니다.");
+        String time=null;
+        while (true) {
+            String date = getDateFromUser(scanner);
+            time = getTimeFromUser(scanner);
+            time=date+time;
+            System.out.println("사용자가 입력한 날짜와 시간은 " + RegexManager.formatDateTime(time)+"입니다.");
 
-        //파일 싱크맞추는거 2차구현때
-        //csvManager.timeSynchronize(time);
+            //파일 싱크맞추는거 2차구현때
+            if (csvManager.timeSynchronize(time)) {
+                break;
+            }
+        }
         mainMenu(scanner, time);
     }
 
     //기존에있는 파일 내용그대로 저장되는거까지는 1차때 구현함
     static void mainMenu(Scanner scanner, String time) {
+        User user = new User();
 
-        //프로그램 실행하면
-        //가게정보,주문정보,음식정보,유저정보
-        //기존파일에있던거 불러와서 다시써야댐
-
-        // 사용자 홈 디렉토리에 저장할 파일 경로 설정
+        //프로그램 실행 시 home csv, resource csv 내용 동기화
         String homeDir = System.getProperty("user.home");
         Path foodFilePath = Paths.get(homeDir, "foodData.csv");
         Path storeFilePath = Paths.get(homeDir, "storeData.csv");
         Path orderFilePath = Paths.get(homeDir, "orderData.csv");
         Path userFilePath = Paths.get(homeDir, "userData.csv");
-
-        //TODO 파일존재할경우에도 데이터불러와서 레포지토리에 저장하도록 수정해야함
-        // CSV 파일이 없을 경우에만 데이터를 복사
-        User user = new User();
-        UserRepository userRepository = csvManager.readUserCsv();
-        FoodRepository foodRepository = csvManager.readFoodCsv();
-        StoreRepository storeRepository = csvManager.readStoreCsv();
-        OrderRepository orderRepository = csvManager.readOrderCsv();
-
-        // 초기 데이터만 CSV로 저장
-        csvManager.writeUserCsv(userRepository);
-        csvManager.writeFoodCsv(foodRepository);
-        csvManager.writeOrderCsv(orderRepository);
-        csvManager.writeStoreCsv(storeRepository);
-
         if (Files.notExists(foodFilePath) || Files.notExists(storeFilePath) || Files.notExists(orderFilePath)|| Files.notExists(userFilePath)) {
-//            UserRepository userRepository = csvManager.readUserCsv();
-//            FoodRepository foodRepository = csvManager.readFoodCsv();
-//            StoreRepository storeRepository = csvManager.readStoreCsv();
-//            OrderRepository orderRepository = csvManager.readOrderCsv();
-//
-//            // 초기 데이터만 CSV로 저장
-//            csvManager.writeUserCsv(userRepository);
-//            csvManager.writeFoodCsv(foodRepository);
-//            csvManager.writeOrderCsv(orderRepository);
-//            csvManager.writeStoreCsv(storeRepository);
+            Synchronize_csv_resource_to_home();
         }
-
+        else {
+            Synchronize_csv_home_to_resource();
+        }
 
         while (true) {
             System.out.println("KUFoodOrder");
@@ -98,7 +81,7 @@ public class MenuManager {
                         }
                         else {
                             while (true) {
-                                if (3 == OrderManeger.Print_User_Main_Menu(time, uid)) break;        //고객 메인 메뉴 출력
+                                if (4 == OrderManeger.Print_User_Main_Menu(time, uid)) break;        //고객 메인 메뉴 출력
                             }
                         }
                         break;
@@ -149,6 +132,50 @@ public class MenuManager {
         return time;
     }
 
+    // resource에 있는 csv를 home에 복사
+    public static void Synchronize_csv_resource_to_home() {
+        UserRepository userRepository = csvManager.readUserCsv();
+        FoodRepository foodRepository = csvManager.readFoodCsv();
+        StoreRepository storeRepository = csvManager.readStoreCsv();
+        OrderRepository orderRepository = csvManager.readOrderCsv();
 
+        // 초기 데이터만 CSV로 저장
+        csvManager.writeUserCsv(userRepository);
+        csvManager.writeFoodCsv(foodRepository);
+        csvManager.writeOrderCsv(orderRepository);
+        csvManager.writeStoreCsv(storeRepository);
+    }
+
+    // home에 있는 csv를 resource에 복사
+    public static void Synchronize_csv_home_to_resource() {
+        String homeDir = System.getProperty("user.home");
+        // 원본 파일 경로
+        String[] fileNames = {"orderData.csv", "foodData.csv", "storeData.csv", "userData.csv"};
+        // 대상 경로
+        String resourceDir = Paths.get(System.getProperty("user.dir"), "src", "main", "resources").toString();
+
+        // resource 폴더가 존재하지 않으면 생성하거나 덮어씌우기
+        File resourceFolder = new File(resourceDir);
+        if (!resourceFolder.exists()) {
+            resourceFolder.mkdirs();
+        }
+
+        // 각 파일 읽어서 resource 폴더에 복사
+        for (String fileName : fileNames) {
+            Path sourcePath = Paths.get(homeDir, fileName);
+            Path destinationPath = Paths.get(resourceDir, fileName);
+
+            // 파일 복사
+            try {
+                Files.copy(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
+                //System.out.println(fileName + " 파일이 " + resourceDir + " 폴더로 복사되었습니다.");
+            } catch (IOException e) {
+                System.err.println("파일 복사 실패: " + fileName);
+                e.printStackTrace();
+            }
+        }
+    }
 
 }
+
+
