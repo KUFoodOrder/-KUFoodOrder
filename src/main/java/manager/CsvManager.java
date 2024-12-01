@@ -465,16 +465,17 @@ public class CsvManager {
         // 주문 내역 파싱 (주문 내역 예시: 202410311820,0008,kang,가람성:짬뽕:1,가람성:짬뽕:1,가람성:볶음밥:1)
         String[] orderArray = orderDetails.split(",");
         int count = orderArray.length - 3;  //반복해야하는 횟수
-        System.out.println("###"+count);
+        //System.out.println("###"+count);
 
-        // foodData.csv 파일을 읽어들일 맵
-        List<String> updatedFoodData = new ArrayList<>();
-        boolean foundMatch = false;
+        for (int i=0; i<count; i++) {
+            // foodData.csv 파일을 읽어들일 맵
+            List<String> updatedFoodData = new ArrayList<>();
+            boolean foundMatch = false;
 
-        try (BufferedReader br = new BufferedReader(new FileReader(foodFilePath))) {
-            String line;
-            for (int i=0; i<count; i++) {
-                String[] orderedItems = orderArray[3+i].split(":");
+            try (BufferedReader br = new BufferedReader(new FileReader(foodFilePath))) {
+                String line;
+
+                String[] orderedItems = orderArray[3 + i].split(":");         // orderdItems에는 [가람성, 짬뽕, 수량]
 
                 while ((line = br.readLine()) != null) {
                     if (line.isEmpty()) {
@@ -485,54 +486,46 @@ public class CsvManager {
                     String storeName = foodData[1];  // foodData.csv의 가게 이름
                     String menuName = foodData[3];   // foodData.csv의 메뉴 이름
                     int currentQuantity = Integer.parseInt(foodData[5]);  // 현재 수량
-//시이발 왜 안돼
                     // 주문 내역을 하나씩 확인하며 일치하는 항목을 찾아 수량을 차감
 
-                        int orderedQuantity = Integer.parseInt(orderedItems[2]);
+                    int orderedQuantity = Integer.parseInt(orderedItems[2]);
 
-                        // 가게와 메뉴 이름이 일치하는지 확인
-                        if (storeName.equals(orderedItems[0]) && menuName.equals(orderedItems[1])) {
-                            // 일치하는 항목이 있으면 수량을 차감
-                            currentQuantity -= orderedQuantity;
+                    // 가게와 메뉴 이름이 일치하는지 확인
+                    if (storeName.equals(orderedItems[0]) && menuName.equals(orderedItems[1])) {
+                        // 일치하는 항목이 있으면 수량을 차감
+                        currentQuantity -= orderedQuantity;
 
-                            // 수량이 0보다 작아지지 않도록 처리
-                            if (currentQuantity < 0) {
-                                currentQuantity = 0;
-                            }
-
-                            // 일치한 항목에 대해 수정된 수량을 기록
-                            foodData[5] = String.valueOf(currentQuantity);
-                            foundMatch = true;
+                        // 수량이 0보다 작아지지 않도록 처리
+                        if (currentQuantity < 0) {
+                            currentQuantity = 0;
                         }
 
-
+                        // 일치한 항목에 대해 수정된 수량을 기록
+                        foodData[5] = String.valueOf(currentQuantity);
+                        foundMatch = true;
+                    }
                     // 수정된 행을 updatedFoodData에 추가
                     updatedFoodData.add(String.join(",", foodData));
-
-
-                }
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
-
-        // 수정된 내용으로 foodData.csv를 갱신
-        if (foundMatch) {
-            try (BufferedWriter bw = new BufferedWriter(new FileWriter(foodFilePath))) {
-                for (String updatedLine : updatedFoodData) {
-                    bw.write(updatedLine);
-                    bw.newLine();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+                return;
             }
-        } else {
-            System.out.println("주문 내역에 해당하는 가게나 메뉴가 없습니다.");
+            // 수정된 내용으로 foodData.csv를 갱신
+            if (foundMatch) {
+                try (BufferedWriter bw = new BufferedWriter(new FileWriter(foodFilePath))) {
+                    for (String updatedLine : updatedFoodData) {
+                        bw.write(updatedLine);
+                        bw.newLine();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                System.out.println("주문 내역에 해당하는 가게나 메뉴가 없습니다.");
+            }
         }
         MenuManager.Synchronize_csv_home_to_resource();
     }
-
 
 }
