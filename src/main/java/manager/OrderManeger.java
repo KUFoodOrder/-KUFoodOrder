@@ -33,6 +33,7 @@ public class OrderManeger {
     private static String currentOrderTime;
     static boolean delivery = false;
     private static boolean canOrder = true;
+    private static boolean checkMoreOrder = false;
 
     public static int Print_User_Main_Menu(String time, String id) {
         userId = id;
@@ -82,6 +83,7 @@ public class OrderManeger {
 
         int keep_order = 1;
         canOrder = true;
+        checkMoreOrder = false;
         while (true) {
             int Category_user_selected = getCategoryFromUser();
             int Store_user_selected = getStoreFromUser(Category_user_selected);
@@ -96,6 +98,7 @@ public class OrderManeger {
                 keep_order = Keep_Order_Check(keep_order);
                 if (keep_order == 0) break;
                 keep_order++;
+                checkMoreOrder = true;  // 매장일때만 true로 설정
             }
             else{
                 break;
@@ -298,7 +301,10 @@ public class OrderManeger {
 
     //카테고리 출력
     private static void Print_Category() {
-        delivery = isDelivery();
+        if(!checkMoreOrder){  // 매장 추가주문 아닐때만 떠야함
+            delivery = isDelivery();
+        }
+
         System.out.println("----------고객 카테고리 입장----------");
         System.out.println("1. 한식");
         System.out.println("2. 중식");
