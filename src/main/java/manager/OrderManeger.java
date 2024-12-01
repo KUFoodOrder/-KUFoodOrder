@@ -57,8 +57,7 @@ public class OrderManeger {
             System.out.println("고객 메인 메뉴 번호를 입력해주세요.");
             System.out.print(">");
 
-            String input = sc.nextLine();
-            input = input.trim();
+            String input = sc.nextLine().trim();
             if (regexManager.checkMenu(input, 4)) {
 
                 userMainMenu_user_selected = Integer.parseInt(input);
@@ -73,29 +72,15 @@ public class OrderManeger {
                         check_order_history_from_User(id);
                         break;
                     case 3:
-                        System.out.println("로그아웃합니다.");
-                        return 3; // 로그아웃 시 루프 종료
-                    default:
-                        System.out.println("잘못된 입력입니다. 다시 시도해주세요.");
+                        cancle_order(time, id);
+                        break;
+                    case 4:
+                        return 4;
                 }
             } else {
                 System.out.println("올바른 메뉴 번호를 입력해주세요.");
             }
         }
-
-        if (userMainMenu_user_selected == 1) {
-            getOrderFromUser(time, id);
-            return 1;
-        } else if (userMainMenu_user_selected == 2) {
-            check_order_history_from_User(id);
-            return 2;
-        } else if (userMainMenu_user_selected == 3) {
-            cancle_order(time, id);
-            return 3;
-        }
-        else System.out.println("로그아웃합니다");
-        return 4;
-
     }
 
     private static void cancle_order(String time, String id) {
@@ -111,14 +96,8 @@ public class OrderManeger {
             return;
         }
 
-
-    public static void getOrderFromUser(String time, String id) {
-        currentOrderTime = time;
-        Confirmed_order.clear();
-
         List<String> allOrders = new ArrayList<>();
         List<String> ordersToCancel = new ArrayList<>();
-
 
 
 
@@ -198,8 +177,8 @@ public class OrderManeger {
         csvManager.DeleteOrderCsv(allOrders);
         csvManager.DeleteFoodCsv(list_to_delete);
         System.out.println("선택한 주문이 삭제되었습니다.");
-    }
 
+    }
 
     public static void getOrderFromUser(String time, String id) {
         Confirmed_order.clear();
