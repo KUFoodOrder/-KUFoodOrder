@@ -6,7 +6,11 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+
+import java.time.temporal.ChronoUnit;
+
 import java.time.format.DateTimeParseException;
+
 import java.util.*;
 
 import Entity.*;
@@ -30,11 +34,19 @@ public class OrderManeger {
 
     static String userId;
     static String storeName;
+    private static String currentOrderTime;
     static boolean delivery = false;
+
+    private static boolean canOrder = true;
+    private static boolean checkMoreOrder = false;
+
+
 
     public static int Print_User_Main_Menu(String time, String id) {
         userId = id;
+
         int userMainMenu_user_selected = 0;
+
         while (true) {
             System.out.println("----------고객 메인 메뉴----------");
             System.out.println("1. 카테고리 선택");
@@ -44,14 +56,33 @@ public class OrderManeger {
             System.out.println("--------------------------------");
             System.out.println("고객 메인 메뉴 번호를 입력해주세요.");
             System.out.print(">");
+
             String input = sc.nextLine();
             input = input.trim();
             if (regexManager.checkMenu(input, 4)) {
+
                 userMainMenu_user_selected = Integer.parseInt(input);
                 System.out.println(userMainMenu_user_selected + "번을 선택하셨습니다.");
-                break;
+
+                // 선택한 메뉴에 따라 동작 수행
+                switch (userMainMenu_user_selected) {
+                    case 1:
+                        getOrderFromUser(time, id);
+                        break;
+                    case 2:
+                        check_order_history_from_User(id);
+                        break;
+                    case 3:
+                        System.out.println("로그아웃합니다.");
+                        return 3; // 로그아웃 시 루프 종료
+                    default:
+                        System.out.println("잘못된 입력입니다. 다시 시도해주세요.");
+                }
+            } else {
+                System.out.println("올바른 메뉴 번호를 입력해주세요.");
             }
         }
+
         if (userMainMenu_user_selected == 1) {
             getOrderFromUser(time, id);
             return 1;
@@ -64,6 +95,7 @@ public class OrderManeger {
         }
         else System.out.println("로그아웃합니다");
         return 4;
+
     }
 
     private static void cancle_order(String time, String id) {
@@ -79,8 +111,14 @@ public class OrderManeger {
             return;
         }
 
+
+    public static void getOrderFromUser(String time, String id) {
+        currentOrderTime = time;
+        Confirmed_order.clear();
+
         List<String> allOrders = new ArrayList<>();
         List<String> ordersToCancel = new ArrayList<>();
+
 
 
 
@@ -166,6 +204,8 @@ public class OrderManeger {
     public static void getOrderFromUser(String time, String id) {
         Confirmed_order.clear();
         int keep_order = 1;
+        canOrder = true;
+        checkMoreOrder = false;
         while (true) {
             int Category_user_selected = getCategoryFromUser();
             int Store_user_selected = getStoreFromUser(Category_user_selected);
@@ -179,6 +219,7 @@ public class OrderManeger {
                 keep_order = Keep_Order_Check(keep_order);
                 if (keep_order == 0) break;
                 keep_order++;
+                checkMoreOrder = true;  // 매장일때만 true로 설정
             }
             else{
                 break;
@@ -187,6 +228,10 @@ public class OrderManeger {
         }
         if(delivery){
             calculateDeliveryPay();
+
+        }
+        if(!canOrder){
+            return;
         }
 
         Print_Bill(Confirmed_order);
@@ -255,7 +300,9 @@ public class OrderManeger {
                 }
             }
             System.out.println("주문이 완료되었습니다. 엔터 키를 누르면 고객 메뉴로 돌아갑니다.");
+
             MenuManager.Synchronize_csv_home_to_resource();
+
         } else {
             System.out.println("주문이 완료되지 않았습니다. 엔터 키를 누르면 고객 메뉴로 돌아갑니다.");
         }
@@ -264,9 +311,35 @@ public class OrderManeger {
         Scanner sc = new Scanner(System.in);
         sc.nextLine();
     }
+
     //TODO 배달 기능 구현
     // 최근 일정 기간 동안의 주문액이 일정 이상이면, 붙을 배달료가 면제되거나 거부될 배달이 (배달료는 붙여서) 수락되게
+    private static boolean isEnoughPay() { // 일정 주문액 (5만원)
+        OrderRepository orderRepository = csvManager.readOrderCsv();  // 파일에 있는 order 내용 받아오고
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm"); //날짜형태로 변환
+        LocalDateTime now = LocalDateTime.parse(currentOrderTime, formatter); //현재시간 LocalDateTime으로
 
+        int totalRecentOrder = 0;  // 주문 금액량 저장할 변수
+        for (Order order : orderRepository.findAll()) { // 모든 주문 정보 순회
+            if (order.getUser().getUserId().equals(userId)) { // 현재 사용자가 주문한것만 필터링..
+                LocalDateTime orderTime = LocalDateTime.parse(order.getOrderTime(), formatter);
+
+                // 7일 이내인지 확인
+                long daysDifference = ChronoUnit.DAYS.between(orderTime, now);  // orderTime과 now를 일 단위로 계산해줌
+                if (daysDifference <= 7) {
+                    // 주문 금액 합산
+                    for (int i = 0; i < order.getFoods().size(); i++) {
+                        int foodPrice = order.getFoods().get(i).getFoodPrice();
+                        int quantity = order.getQuantitys().get(i);
+                        totalRecentOrder += foodPrice * quantity;
+                    }
+                }
+            }
+        }
+
+        // 합산 금액이 5만 원 이상인지 확인
+        return totalRecentOrder >= 50000;
+    }
 
     //TODO 배달료 계산
     // 가게 위치와 주문자 위치 간의 직선거리에 따라, 일정 이상 멀면 배달료가 붙고, 더 멀면 아예 배달이 거부되게
@@ -290,13 +363,27 @@ public class OrderManeger {
             System.out.println("배달이 가능합니다.");
             System.out.println("배달료는 무료입니다.");
 //            System.out.println("배달 가능 (배달료 없음). 거리: " + distance);
-        } else if (distance > 1000.0 && distance <= 4000.0) { // 1001~4000
+        } else if (distance > 1000.0 && distance <= 4000) { // 1001~4000
             System.out.println("배달이 가능합니다.");
-//            System.out.println("배달 가능 (배달료 있음). 거리: " + distance);
-            System.out.println("배달료: " + deliveryPay);
+            if(isEnoughPay()){//최근 주문 금액이 일정 이상일 때
+                System.out.println("최근 일정금액 이상 주문하셨습니다.\n배달료는 무료입니다.");
+            }
+            else{
+                //            System.out.println("배달 가능 (배달료 있음). 거리: " + distance);
+                System.out.println("배달료: " + deliveryPay);
+            }
+
         } else { // 4000 초과
-            System.out.println("거리가 멀어서 배달이 불가능합니다.");
-//            System.out.println("배달 불가능. 거리: " + distance);
+            if(isEnoughPay()){  //최근 주문 금액이 일정 이상일 때
+                System.out.println("최근 일정금액 이상 주문하셨습니다.\n배달이 가능합니다.");
+                System.out.println("배달료: " + deliveryPay);
+            }
+            else{
+                System.out.println("거리가 멀어서 배달이 불가능합니다.");
+                //            System.out.println("배달 불가능. 거리: " + distance);
+                canOrder = false;
+
+            }
         }
     }
 
@@ -344,7 +431,10 @@ public class OrderManeger {
 
     //카테고리 출력
     private static void Print_Category() {
-        delivery = isDelivery();
+        if(!checkMoreOrder){  // 매장 추가주문 아닐때만 떠야함
+            delivery = isDelivery();
+        }
+
         System.out.println("----------고객 카테고리 입장----------");
         System.out.println("1. 한식");
         System.out.println("2. 중식");
@@ -625,6 +715,10 @@ public class OrderManeger {
                     }
                     System.out.println("합계: " + totalPrice + "원");
                     System.out.println();
+
+//                    UserRepository userRepository = csvManager.userRepository;
+//                    User user = userRepository.findUserById(userId);
+
                 }
             }
 
