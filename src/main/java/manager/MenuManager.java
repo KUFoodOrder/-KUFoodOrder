@@ -48,6 +48,7 @@ public class MenuManager {
         Path userFilePath = Paths.get(homeDir, "userData.csv");
         if (Files.notExists(foodFilePath) || Files.notExists(storeFilePath) || Files.notExists(orderFilePath)|| Files.notExists(userFilePath)) {
             Synchronize_csv_resource_to_home();
+            Synchronize_csv_home_to_resource();
         }
         else {
             Synchronize_csv_home_to_resource();
