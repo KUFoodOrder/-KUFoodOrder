@@ -181,6 +181,8 @@ public class OrderManeger {
     }
 
     public static void getOrderFromUser(String time, String id) {
+        currentOrderTime = time;
+
         Confirmed_order.clear();
         int keep_order = 1;
         canOrder = true;
@@ -294,24 +296,39 @@ public class OrderManeger {
     //TODO 배달 기능 구현
     // 최근 일정 기간 동안의 주문액이 일정 이상이면, 붙을 배달료가 면제되거나 거부될 배달이 (배달료는 붙여서) 수락되게
     private static boolean isEnoughPay() { // 일정 주문액 (5만원)
-        OrderRepository orderRepository = csvManager.readOrderCsv();  // 파일에 있는 order 내용 받아오고
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm"); //날짜형태로 변환
-        LocalDateTime now = LocalDateTime.parse(currentOrderTime, formatter); //현재시간 LocalDateTime으로
+        OrderRepository orderRepository = csvManager.readOrderCsv();  // 파일에 있는 order 내용 받아오기
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm"); // 날짜 형태로 변환
+
+        // currentOrderTime이 null인 경우 현재 시간을 기본값으로 설정
+        if (currentOrderTime == null) {
+            currentOrderTime = LocalDateTime.now().format(formatter);
+        }
+
+        LocalDateTime now;
+        try {
+            now = LocalDateTime.parse(currentOrderTime, formatter);
+        } catch (DateTimeParseException e) {
+            System.out.println("Invalid date format: " + currentOrderTime);
+            return false; // 날짜 형식이 잘못된 경우 처리
+        }
 
         int totalRecentOrder = 0;  // 주문 금액량 저장할 변수
         for (Order order : orderRepository.findAll()) { // 모든 주문 정보 순회
-            if (order.getUser().getUserId().equals(userId)) { // 현재 사용자가 주문한것만 필터링..
-                LocalDateTime orderTime = LocalDateTime.parse(order.getOrderTime(), formatter);
+            if (order.getUser() != null && order.getUser().getUserId().equals(userId)) {
+                try {
+                    LocalDateTime orderTime = LocalDateTime.parse(order.getOrderTime(), formatter);
+                    long daysDifference = ChronoUnit.DAYS.between(orderTime, now);  // orderTime과 now를 일 단위로 계산
 
-                // 7일 이내인지 확인
-                long daysDifference = ChronoUnit.DAYS.between(orderTime, now);  // orderTime과 now를 일 단위로 계산해줌
-                if (daysDifference <= 7) {
-                    // 주문 금액 합산
-                    for (int i = 0; i < order.getFoods().size(); i++) {
-                        int foodPrice = order.getFoods().get(i).getFoodPrice();
-                        int quantity = order.getQuantitys().get(i);
-                        totalRecentOrder += foodPrice * quantity;
+                    if (daysDifference <= 7) {
+                        // 주문 금액 합산
+                        for (int i = 0; i < order.getFoods().size(); i++) {
+                            int foodPrice = order.getFoods().get(i).getFoodPrice();
+                            int quantity = order.getQuantitys().get(i);
+                            totalRecentOrder += foodPrice * quantity;
+                        }
                     }
+                } catch (DateTimeParseException e) {
+
                 }
             }
         }
