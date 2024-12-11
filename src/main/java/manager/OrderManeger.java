@@ -96,8 +96,8 @@ public class OrderManeger {
             return;
         }
 
-        List<String> allOrders = new ArrayList<>();
-        List<String> ordersToCancel = new ArrayList<>();
+        List<String> allOrders = new ArrayList<>();         //자기 아이디의 모든 주문 내역. 수정함. 그냥 모든 주문내역
+        List<String> ordersToCancel = new ArrayList<>();    //지울 수 있는 주문 내역
 
 
 
@@ -117,12 +117,15 @@ public class OrderManeger {
                 String[] array = line.split(",");
                 String orderTimeStr = array[0];
                 //System.out.println("time is "+ array[0] + " 번호는 "+ array[1]);
-                if (!array[2].equals(id)) {//id 다르면 넘어가기
-                    continue;
-                }
+
                 try {
                     LocalDateTime orderTime = LocalDateTime.parse(orderTimeStr, formatter);
                     String MyorderTimeStr = targetTime.format(DateTimeFormatter.ofPattern("yyyyMMddHHmm"));
+                    if (!array[2].equals(id)) {//id 다르면 넘어가기
+                        allOrders.add(line);
+                        continue;
+                    }
+
                     // 10분 이내의 주문인지 확인
                     if (MyorderTimeStr.equals(orderTimeStr) || (orderTime.isAfter(targetTime.minusMinutes(10)) && orderTime.isBefore(targetTime.plusMinutes(10))) ) {
                         ordersToCancel.add(line);
@@ -154,10 +157,12 @@ public class OrderManeger {
         // 사용자로부터 삭제할 주문 선택
         System.out.print("삭제할 주문의 번호를 선택하세요: ");
         Scanner scanner = new Scanner(System.in);
-        int selectedIndex = -1;
+        String input = "";
+        input = scanner.nextLine().trim();
 
+        int selectedIndex = -1;
         try {
-            selectedIndex = scanner.nextInt();
+            selectedIndex = Integer.parseInt(input);
         } catch (Exception e) {
             System.out.println("잘못된 입력입니다.");
             return;
