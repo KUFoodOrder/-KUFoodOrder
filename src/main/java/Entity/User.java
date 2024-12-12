@@ -301,6 +301,7 @@ public class User {
 
                             // 한글만 입력 받도록 정규 표현식 사용
                             if (regexManager.checkKorean(storeName)) {
+
                                 if (storeRepository.findStoreName(storeName) != null) { // 가게가 존재하는지 확인
                                     break; // 유효한 가게 이름이면 루프 종료
                                 } else {

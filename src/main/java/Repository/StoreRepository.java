@@ -42,4 +42,5 @@ public class StoreRepository {
         return matchedStores;        // 해당 카테고리 리스트들 반환
     }
 
+
 }
