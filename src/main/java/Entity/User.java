@@ -287,6 +287,7 @@ public class User {
                     while (true) {
                         if (scanner.hasNextInt()) {
                             choice = scanner.nextInt();
+                            scanner.nextLine(); // 여기서 개행 문자를 소비하여 다음번 문자열 입력 받을 때 비정상적인 빈값 읽기 방지
                             break;
                         } else {
                             System.out.println("1 또는 2를 입력하세요.");
@@ -299,38 +300,70 @@ public class User {
                         String storeName = "";
                         String foodName = "";
                         // 가게 이름 입력 예외 처리
-                        // 가게 이름 입력 예외 처리
                         while (true) {
                             System.out.print("가게 이름 > ");
-                            storeName = scanner.next().trim(); // 공백 제거
+                            String inputStoreName = scanner.nextLine();
+                            String trimmedStoreName = inputStoreName.trim();
 
-                            // 한글만 입력 받도록 정규 표현식 사용
-                            if (regexManager.checkKorean(storeName)) {
+                            // 1) 아무것도 안친 경우 (엔터만 누른 경우)
+                            // inputStoreName은 "", trimmedStoreName도 ""이 됨
+                            // 현재 로직과 구분해주기 위해, 완전히 빈 입력에 대한 별도 처리
+                            if (inputStoreName.isEmpty()) {
+                                System.out.println("가게 이름을 입력해주세요.");
+                                continue;
+                            }
 
-                                if (storeRepository.findStoreName(storeName) != null) { // 가게가 존재하는지 확인
-                                    break; // 유효한 가게 이름이면 루프 종료
-                                } else {
-                                    System.out.println("해당 가게가 존재하지 않습니다.");
-                                }
+                            // 2) 공백만 입력한 경우 ("   " 등)
+                            // inputStoreName은 공백문자로만 이루어져 있고 trim()을 하면 "" 됨
+                            if (trimmedStoreName.isEmpty()) {
+                                System.out.println("가게 이름은 공백만으로 이뤄질 수 없습니다. 다시 입력해주세요.");
+                                continue;
+                            }
+
+                            // 3) 한글+내부공백 체크
+                            if (!trimmedStoreName.matches("^[가-힣]+(?:\\s[가-힣]+)*$")) {
+                                System.out.println("가게 이름은 한글만 입력할 수 있으며 단어 사이에 공백을 허용합니다.");
+                                continue;
+                            }
+
+                            // 4) 존재하는 가게인지 확인
+                            if (storeRepository.findStoreName(trimmedStoreName) != null) {
+                                storeName = trimmedStoreName;
+                                break; // 유효한 가게 이름이면 루프 종료
                             } else {
-                                System.out.println("가게 이름은 한글로만 입력해주세요."); // 한글 이외의 입력 안내
+                                System.out.println("해당 가게가 존재하지 않습니다.");
                             }
                         }
+
                         Store s = storeRepository.findStoreName(storeName);
                         // 메뉴 이름 입력 예외 처리
                         while (true) {
                             System.out.print("메뉴 이름 > ");
-                            foodName = scanner.next().trim(); // 공백 제거
+                            foodName = scanner.nextLine(); // 엔터 전까지 한 줄 모두 입력 받기
+                            String trimmedFoodName = foodName.trim();
 
-                            // 한글만 입력 받도록 정규 표현식 사용
-                            if (regexManager.checkKorean(foodName)) {
-                                if (s.isAddFoodToMenu(foodName)) { // 메뉴가 존재하지 않으면
-                                    break; // 유효한 메뉴 이름이면 루프 종료
-                                } else {
-                                    System.out.println("이미 존재하는 메뉴입니다."); // 이미 존재하는 메뉴일 경우 안내
-                                }
+                            // 1) 공백만 입력한 경우 체크: trim 후 빈 문자열이면 공백만 입력한 것
+                            if (trimmedFoodName.isEmpty()) {
+                                System.out.println("메뉴 이름은 공백만으로 이뤄질 수 없습니다. 다시 입력해주세요.");
+                                continue;
+                            }
+
+                            // 2) 한글 및 내부 공백 검사
+                            //    ^[가-힣]+ : 한글 한 글자 이상
+                            //    (?:\\s[가-힣]+)* : 공백 후 한글 한 글자 이상 반복
+                            //    즉, "김치", "김 치", "김  치"(연속공백도 허용하려면 추가 처리 필요) 모두 허용
+                            if (!trimmedFoodName.matches("^[가-힣]+(?:\\s[가-힣]+)*$")) {
+                                System.out.println("메뉴 이름은 한글만 입력할 수 있으며, 단어 사이의 공백은 허용됩니다.");
+                                continue;
+                            }
+
+                            // 3) 중복 메뉴 체크
+                            if (s.isAddFoodToMenu(trimmedFoodName)) {
+                                // 중복되지 않으면 루프 종료
+                                foodName = trimmedFoodName;
+                                break;
                             } else {
-                                System.out.println("메뉴 이름은 한글로만 입력해주세요."); // 한글 이외의 입력 안내
+                                System.out.println("이미 존재하는 메뉴입니다. 다른 이름으로 다시 시도하세요.");
                             }
                         }
                         while (!validInput) {
