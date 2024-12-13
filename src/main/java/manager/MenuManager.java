@@ -142,13 +142,9 @@ public class MenuManager {
 
         // 초기 데이터만 CSV로 저장
         csvManager.writeUserCsv(userRepository);
-        System.out.println("hihi1");
         csvManager.writeFoodCsv(foodRepository);
-        System.out.println("hihi2");
         csvManager.writeOrderCsv(orderRepository);
-        System.out.println("hihi3");
         csvManager.writeStoreCsv(storeRepository);
-        System.out.println("hihi4");
     }
 
     // home에 있는 csv를 resource에 복사

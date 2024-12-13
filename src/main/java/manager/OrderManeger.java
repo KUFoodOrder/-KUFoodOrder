@@ -325,7 +325,7 @@ public class OrderManeger {
     //TODO 배달료 계산
     // 가게 위치와 주문자 위치 간의 직선거리에 따라, 일정 이상 멀면 배달료가 붙고, 더 멀면 아예 배달이 거부되게
     private static void calculateDeliveryPay() {
-        UserRepository userRepository =  csvManager.readUserCsv();
+        UserRepository userRepository =  csvManager.hi_readUserCsv();
         User user = userRepository.findUserById(userId);
         Position userPosition = user.getUserLocation();
         StoreRepository storeRepository = csvManager.readStoreCsv();
