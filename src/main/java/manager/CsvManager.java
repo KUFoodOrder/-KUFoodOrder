@@ -131,6 +131,7 @@ public class CsvManager {
                 }
 
                 // Store 객체 생성 (카테고리 리스트와 가게 이름, 위치)
+
                 Store store = new Store(storeCategories, array[1],
                         new Position(Integer.parseInt(array[2]), Integer.parseInt(array[3])));
 

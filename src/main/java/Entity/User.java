@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 
+import static manager.MenuManager.Synchronize_csv_resource_to_home;
+
 
 //사용자 객체
 public class User {
@@ -28,6 +30,8 @@ public class User {
     static String admin_id = "admin";
 
     CsvManager csvManager = new CsvManager();
+
+    int xPos = 0, yPos = 0;
 
     public User(String userId, String userPassword, String userName, Position userLocation) {
         this.userId = userId;
@@ -168,7 +172,6 @@ public class User {
     }
 
     public String user_Login(String time) {
-        int x = 0, y = 0;
         Scanner sc = new Scanner(System.in);
         csvManager.home_readUserCsv();
         String uid;
@@ -206,10 +209,10 @@ public class User {
 
                         String[] coordinates = input.split("\\s+");
 
-                        x = Integer.parseInt(coordinates[0].trim());
-                        y = Integer.parseInt(coordinates[1].trim());
+                        xPos = Integer.parseInt(coordinates[0].trim());
+                        yPos = Integer.parseInt(coordinates[1].trim());
 
-                        user.setUserLocation(new Position(x,y));
+                        user.setUserLocation(new Position(xPos,yPos));
                         csvManager.writeUserCsv(userRepository);
                         break;
 
@@ -261,6 +264,7 @@ public class User {
     }
 
     public void admin_SetInformation() {
+        Synchronize_csv_resource_to_home();
         Scanner scanner = new Scanner(System.in);
         String option = "";
 
@@ -294,6 +298,7 @@ public class User {
                         boolean validInput = false;
                         String storeName = "";
                         String foodName = "";
+                        // 가게 이름 입력 예외 처리
                         // 가게 이름 입력 예외 처리
                         while (true) {
                             System.out.print("가게 이름 > ");
@@ -448,12 +453,6 @@ public class User {
                             }
                         }
                         Food f = foodRepository.findFoodByFoodName(s,foodName);
-                        foodRepository.removeFood(s,f); // 리스트에서 해당 메뉴 지워줌
-                        s.removeFoodFromMenu(foodName);
-                        csvManager.writeFoodCsv(foodRepository); // 파일 수정
-                        csvManager.writeStoreCsv(storeRepository);
-                        System.out.println("메뉴가 삭제되었습니다.");
-
                         f.setFoodPrice(foodPrice); // 메뉴 금액 변경
                         csvManager.writeFoodCsv(foodRepository); // 파일 수정
                         System.out.println("변경되었습니다.");

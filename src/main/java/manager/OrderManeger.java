@@ -333,19 +333,16 @@ public class OrderManeger {
         UserRepository userRepository =  csvManager.readUserCsv();
         User user = userRepository.findUserById(userId);
         Position userPosition = user.getUserLocation();
-
-
         StoreRepository storeRepository = csvManager.readStoreCsv();
         Store store = storeRepository.findStoreName(storeName);
         Position storePosition = store.getStoreLocation();
-
         int deliveryPay = 1000; //배달료 1000원으로
         // 좌표 사이의 거리 계산
         double distance = Math.sqrt(Math.pow(userPosition.getX() - storePosition.getX(), 2) +
                 Math.pow(userPosition.getY() - storePosition.getY(), 2));
-
+        System.out.println(userPosition);
+        System.out.println(store);
         System.out.println(distance);
-
         // 거리 기준에 따라 배달 가능 여부 및 배달료 설정
         if (distance <= 1000.0) {  // 1000 이하이면
             System.out.println("배달이 가능합니다.");
@@ -353,6 +350,8 @@ public class OrderManeger {
 //            System.out.println("배달 가능 (배달료 없음). 거리: " + distance);
         } else if (distance > 1000.0 && distance <= 4000) { // 1001~4000
             System.out.println("배달이 가능합니다.");
+//            System.out.println("배달 가능 (배달료 있음). 거리: " + distance);
+            System.out.println("배달료: " + deliveryPay);
             if(isEnoughPay()){//최근 주문 금액이 일정 이상일 때
                 System.out.println("최근 일정금액 이상 주문하셨습니다.\n배달료는 무료입니다.");
             }
@@ -362,6 +361,8 @@ public class OrderManeger {
             }
 
         } else { // 4000 초과
+            System.out.println("거리가 멀어서 배달이 불가능합니다.");
+//            System.out.println("배달 불가능. 거리: " + distance);
             if(isEnoughPay()){  //최근 주문 금액이 일정 이상일 때
                 System.out.println("최근 일정금액 이상 주문하셨습니다.\n배달이 가능합니다.");
                 System.out.println("배달료: " + deliveryPay);
@@ -374,7 +375,6 @@ public class OrderManeger {
             }
         }
     }
-
 
 
     private static boolean isDelivery() {
