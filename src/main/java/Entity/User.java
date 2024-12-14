@@ -412,6 +412,7 @@ public class User {
                             csvManager.writeFoodCsv(foodRepository); // 파일 수정
                             csvManager.writeStoreCsv(storeRepository);
                             System.out.println("메뉴가 추가되었습니다.");
+                            MenuManager.Synchronize_csv_home_to_resource();
                             return;
                     }
                     else if (choice == 2) { // 메뉴 삭제
@@ -458,6 +459,7 @@ public class User {
                             csvManager.writeFoodCsv(foodRepository); // 파일 수정
                             csvManager.writeStoreCsv(storeRepository);
                             System.out.println("메뉴가 삭제되었습니다.");
+                            MenuManager.Synchronize_csv_home_to_resource();
                             return;
                         }
                     }
@@ -501,23 +503,27 @@ public class User {
                         return;
                     } else {
                         int foodPrice = 0;
-                        while (true) {
-                            System.out.println("변경할 금액을 입력해주세요.");
-                            System.out.print("> ");
-
-                            // 가격 입력 예외 처리
-                            if (scanner.hasNextInt()) {
-                                foodPrice = scanner.nextInt();
-                                break;
+                        boolean validInput=false;
+                        while (!validInput) {
+                            System.out.print("변경할 금액을 입력해주세요 > ");
+                            String priceInput = scanner.nextLine().trim();
+                            if (priceInput.matches("\\d+")) {
+                                foodPrice = Integer.parseInt(priceInput);
+                                if (foodPrice < 0 || foodPrice > 100000) {
+                                    System.out.println("가격은 0~100,000 사이여야 합니다.");
+                                    continue;
+                                }
+                                validInput = true;
                             } else {
                                 System.out.println("유효한 가격을 입력하세요.");
-                                scanner.next();
                             }
                         }
+
                         Food f = foodRepository.findFoodByFoodName(s,foodName);
                         f.setFoodPrice(foodPrice); // 메뉴 금액 변경
                         csvManager.writeFoodCsv(foodRepository); // 파일 수정
                         System.out.println("변경되었습니다.");
+                        MenuManager.Synchronize_csv_home_to_resource();
                         return;
 
                     }
@@ -563,6 +569,7 @@ public class User {
                         } catch (Exception e) {
                             System.out.println("입력 형식이 올바르지 않습니다.");
                         }
+                        MenuManager.Synchronize_csv_home_to_resource();
                         return;
                     }
                 }
@@ -660,7 +667,7 @@ public class User {
                         } catch (IOException e) {
                             System.err.println("파일 쓰기 중 오류 발생: " + e.getMessage());
                         }
-                        System.out.println("메뉴가 추가되었습니다.");
+                        System.out.println("가게가 추가되었습니다.");
 
                         MenuManager.Synchronize_csv_home_to_resource();
                         return;
