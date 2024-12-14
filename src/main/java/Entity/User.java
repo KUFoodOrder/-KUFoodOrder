@@ -588,7 +588,7 @@ public class User {
                             System.out.print("가게 위치 > ");
                             Store_Location = scanner.nextLine().trim();
                             if (regexManager.check_XY(Store_Location)) {
-                                System.out.println("가게 이름은 " + Store_Name +"입니다.");
+                                System.out.println("가게 위치는 " + Store_Location +"입니다.");
                                 break;
                             }
                         }
