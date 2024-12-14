@@ -176,6 +176,29 @@ public class MenuManager {
             }
         }
     }
+    public static void real_Synchronize_csv_resource_to_home() {
+        String homeDir = System.getProperty("user.home");
+        // 원본 파일 경로
+        String[] fileNames = {"orderData.csv", "foodData.csv", "storeData.csv", "userData.csv"};
+        // resource 디렉토리 경로
+        String resourceDir = Paths.get(System.getProperty("user.dir"), "src", "main", "resources").toString();
+
+        // 각 파일 읽어서 홈 디렉토리에 복사
+        for (String fileName : fileNames) {
+            Path sourcePath = Paths.get(resourceDir, fileName); // 이제 src/main/resources에서 읽음
+            Path destinationPath = Paths.get(homeDir, fileName); // 이제 홈 디렉토리로 복사
+
+            // 파일 복사
+            try {
+                Files.copy(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
+                //System.out.println(fileName + " 파일이 " + homeDir + " 폴더로 복사되었습니다.");
+            } catch (IOException e) {
+                System.err.println("파일 복사 실패: " + fileName);
+                e.printStackTrace();
+            }
+        }
+    }
+
 
 }
 

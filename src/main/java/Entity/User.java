@@ -4,8 +4,11 @@ import Repository.FoodRepository;
 import Repository.StoreRepository;
 import Repository.UserRepository;
 import manager.CsvManager;
+import manager.MenuManager;
 import manager.RegexManager;
 
+import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
@@ -264,12 +267,12 @@ public class User {
     }
 
     public void admin_SetInformation() {
-        Synchronize_csv_resource_to_home();
+        MenuManager.real_Synchronize_csv_resource_to_home();
         Scanner scanner = new Scanner(System.in);
         String option = "";
 
         while (true) {
-            System.out.println("변경할 정보를 입력해주세요. <메뉴, 가격, 위치>");
+            System.out.println("변경할 정보를 입력해주세요. <가게, 메뉴, 가격, 위치>");
             System.out.println("관리자 메뉴로 돌아가려면 'q'를 누르세요.");
             System.out.print("> ");
 
@@ -537,6 +540,209 @@ public class User {
                         return;
                     }
                 }
+
+                case "가게"-> {
+                    System.out.println("--- 가게 정보 변경하기 ---");
+                    System.out.println("1.추가  2.삭제");
+                    System.out.print("> ");
+                    int choice = 0;
+                    while (true) {
+                        if (scanner.hasNextInt()) {
+                            choice = scanner.nextInt();
+                            scanner.nextLine(); // 여기서 개행 문자를 소비하여 다음번 문자열 입력 받을 때 비정상적인 빈값 읽기 방지
+                            break;
+                        } else {
+                            System.out.println("1 또는 2를 입력하세요.");
+                            scanner.next();
+                        }
+                    }
+                    if(choice == 1){ //가게 추가
+                        String Store_Cate = "";
+                        String Store_Name = "";
+                        String Store_Location = "";
+
+                        while (true) {
+                            System.out.print("가게 이름 > ");
+                            Store_Name = scanner.nextLine().trim();
+                            if (regexManager.checkKorean(Store_Name)) {
+                                System.out.println("가게 이름은 " + Store_Name +"입니다.");
+                                break;
+                            }
+                        }
+                        while (true) {
+                            System.out.println("\n가게 카테고리를 선택해주세요");
+                            System.out.println("한식은 1, 중식은 2, 일식은 3");
+                            System.out.print("가게 카테고리 > ");
+                            Store_Cate = scanner.nextLine().trim();
+                            if (regexManager.checkMenu(Store_Cate, 3)) {
+                                System.out.print("가게 카테고리는 ");
+                                if (Store_Cate.equals("1")) System.out.print("한식");
+                                else if (Store_Cate.equals("2")) System.out.print("중식");
+                                else if (Store_Cate.equals("3")) System.out.print("일식");
+                                System.out.println("입니다.");
+                                break;
+                            }
+                        }
+                        while (true) {
+                            System.out.println("\n가게 위치를 공백을 두고 입력해주세요");
+                            System.out.print("가게 위치 > ");
+                            Store_Location = scanner.nextLine().trim();
+                            if (regexManager.check_XY(Store_Location)) {
+                                System.out.println("가게 이름은 " + Store_Name +"입니다.");
+                                break;
+                            }
+                        }
+                        System.out.println("가게 추가를 확정하시겠습니까? Y/N");
+                        while (true) {
+                            System.out.print(">");
+                            String input = scanner.nextLine();
+                            input = input.trim();
+                            if (regexManager.checkYN(input)) {
+                                if (input.charAt(0) == 'Y') {
+                                    System.out.println("가게 추가를 확정합니다.");
+                                    break;
+                                } else {
+                                    System.out.println("가게 추가를 하지 않습니다.");
+                                    return;
+                                }
+                            }
+                        }
+
+                        // 입력된 문자열
+
+                        // 결과를 저장할 문자열 배열
+                        String[] result = new String[4]; // 4개의 요소로 이루어진 배열
+                        // Store_Cate: 공백을 ":"으로 대체하여 index 0에 저장
+                        result[0] = Store_Cate.replace(" ", ":");
+                        // Store_Name: 그대로 index 1에 저장
+                        result[1] = Store_Name;
+                        // Store_Location: 공백을 기준으로 왼쪽 값은 index 2, 오른쪽 값은 index 3에 저장
+                        String[] locationParts = Store_Location.split(" ");
+                        result[2] = locationParts[0]; // 좌측 값
+                        result[3] = locationParts[1]; // 우측 값
+
+                        String csvLine = String.join(",", result);
+
+                        String homeDirectory = System.getProperty("user.home");
+                        String filePath = homeDirectory + "/storeData.csv";
+
+                        // CSV 파일에 기록
+                        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath, true))) {
+                            writer.write(csvLine);
+                            writer.newLine(); // 줄 바꿈
+                            //System.out.println("데이터가 성공적으로 저장되었습니다: " + filePath);
+                        } catch (IOException e) {
+                            System.err.println("파일 쓰기 중 오류 발생: " + e.getMessage());
+                        }
+                        System.out.println("메뉴가 추가되었습니다.");
+
+                        MenuManager.Synchronize_csv_home_to_resource();
+                        return;
+                    }
+                    else if (choice == 2) { // 가게 삭제
+                        // 가게 이름 입력 예외 처리
+                        String searchName = "";
+                        while (true) {
+                            System.out.print("삭제하려는 가게 이름 > ");
+                            searchName = scanner.next().trim(); // 공백 제거
+                            if (regexManager.checkKorean(searchName)) {
+                                break;
+                            }
+                        }
+                        // 홈 디렉토리 설정 및 파일 경로 지정
+                        String homeDirectory = System.getProperty("user.home");
+                        String filePath = homeDirectory + "/storeData.csv";
+
+                        // CSV 파일 읽기 및 처리
+                        List<String> updatedData = new ArrayList<>();
+                        boolean isFound = false;
+
+                        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+                            String line;
+
+                            while ((line = reader.readLine()) != null) {
+                                String[] columns = line.split(","); // 각 행을 쉼표로 분리
+                                if (columns.length > 1 && columns[1].equals(searchName)) {
+                                    isFound = true; // 검색된 이름이 존재
+                                } else {
+                                    updatedData.add(line); // 검색 결과가 아니면 저장
+                                }
+                            }
+                        } catch (IOException e) {
+                            System.err.println("파일 읽기 중 오류 발생: " + e.getMessage());
+                            return;
+                        }
+
+                        if (!isFound) {
+                            System.out.println("해당하는 가게가 없습니다.");
+                            return;
+                        }
+
+                        // 검색된 행이 제거된 데이터를 파일에 다시 쓰기
+                        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+                            for (String line : updatedData) {
+                                writer.write(line);
+                                writer.newLine();
+                            }
+                            //System.out.println("파일 업데이트 완료: 행이 제거되었습니다.");
+                        } catch (IOException e) {
+                            System.err.println("파일 쓰기 중 오류 발생: " + e.getMessage());
+                        }
+
+
+
+
+
+
+
+
+
+
+
+
+                        System.out.println("성공적으로 삭제되었습니다.");
+
+                        MenuManager.Synchronize_csv_home_to_resource();
+                        return;
+                    }
+                }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
                 default -> {
                     System.out.println("잘못된 입력입니다. <메뉴, 가격, 위치> 중에서 선택하세요.");

@@ -424,31 +424,63 @@ public class CsvManager {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
         LocalDateTime currentMostRecent = null;
 
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(
-                getClass().getResourceAsStream(orderCsvFileName)))) {
-            String line;
+        String homeDir = System.getProperty("user.home");
+        String orderFilePath = Paths.get(homeDir, "orderData.csv").toString();
 
-            while ((line = br.readLine()) != null) {
-                if (line.isEmpty()) {
-                    continue; // 빈 줄 무시
-                }
+        if (Files.notExists(Paths.get(homeDir, "orderData.csv"))) {
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                    getClass().getResourceAsStream(orderCsvFileName)))) {
+                String line;
 
-                String[] array = line.split(",");
-                String orderTimeStr = array[0];
-
-                try {
-                    LocalDateTime orderTime = LocalDateTime.parse(orderTimeStr, formatter);
-
-                    // 가장 최근 일시 업데이트
-                    if (currentMostRecent == null || orderTime.isAfter(currentMostRecent)) {
-                        currentMostRecent = orderTime;
+                while ((line = br.readLine()) != null) {
+                    if (line.isEmpty()) {
+                        continue; // 빈 줄 무시
                     }
-                } catch (DateTimeParseException e) {
-                    System.out.println("유효하지 않은 날짜 형식: " + orderTimeStr);
+
+                    String[] array = line.split(",");
+                    String orderTimeStr = array[0];
+
+                    try {
+                        LocalDateTime orderTime = LocalDateTime.parse(orderTimeStr, formatter);
+
+                        // 가장 최근 일시 업데이트
+                        if (currentMostRecent == null || orderTime.isAfter(currentMostRecent)) {
+                            currentMostRecent = orderTime;
+                        }
+                    } catch (DateTimeParseException e) {
+                        System.out.println("유효하지 않은 날짜 형식: " + orderTimeStr);
+                    }
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+        }
+        else {
+            try (BufferedReader br = new BufferedReader(new FileReader(orderFilePath))) {
+                String line;
+
+                while ((line = br.readLine()) != null) {
+                    if (line.isEmpty()) {
+                        continue; // 빈 줄 무시
+                    }
+
+                    String[] array = line.split(",");
+                    String orderTimeStr = array[0];
+
+                    try {
+                        LocalDateTime orderTime = LocalDateTime.parse(orderTimeStr, formatter);
+
+                        // 가장 최근 일시 업데이트
+                        if (currentMostRecent == null || orderTime.isAfter(currentMostRecent)) {
+                            currentMostRecent = orderTime;
+                        }
+                    } catch (DateTimeParseException e) {
+                        System.out.println("유효하지 않은 날짜 형식: " + orderTimeStr);
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         String most_cur_time = null;
