@@ -677,7 +677,7 @@ public class User {
                         String searchName = "";
                         while (true) {
                             System.out.print("삭제하려는 가게 이름 > ");
-                            searchName = scanner.next().trim(); // 공백 제거
+                            searchName = scanner.nextLine().trim(); // 공백 제거
                             if (regexManager.checkKorean(searchName)) {
                                 break;
                             }
