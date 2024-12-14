@@ -267,7 +267,12 @@ public class User {
     }
 
     public void admin_SetInformation() {
+        // CSV 파일을 동기화하여 storeRepository를 최신 상태로 유지
         MenuManager.real_Synchronize_csv_resource_to_home();
+
+        // 동기화 후 storeRepository를 재로딩
+        storeRepository = csvManager.readStoreCsv();
+
         Scanner scanner = new Scanner(System.in);
         String option = "";
 
@@ -288,13 +293,27 @@ public class User {
                     System.out.print("> ");
                     int choice = 0;
                     while (true) {
-                        if (scanner.hasNextInt()) {
-                            choice = scanner.nextInt();
-                            scanner.nextLine(); // 여기서 개행 문자를 소비하여 다음번 문자열 입력 받을 때 비정상적인 빈값 읽기 방지
+                        System.out.print("1 또는 2를 입력하세요: ");
+                        String input = scanner.nextLine().trim(); // 공백 제거 후 입력 받기
+
+                        // 1) 입력 값이 공백만 있는 경우
+                        if (input.isEmpty()) {
+                            System.out.println("입력이 비어 있습니다. 1 또는 2를 입력하세요.");
+                            continue;
+                        }
+
+                        // 2) 숫자 여부 확인
+                        if (!input.matches("\\d+")) {
+                            System.out.println("유효한 숫자를 입력하세요. 1 또는 2만 가능합니다.");
+                            continue;
+                        }
+
+                        // 3) 범위 확인
+                        choice = Integer.parseInt(input);
+                        if (choice == 1 || choice == 2) {
                             break;
                         } else {
-                            System.out.println("1 또는 2를 입력하세요.");
-                            scanner.next();
+                            System.out.println("1 또는 2만 입력 가능합니다.");
                         }
                     }
                     if(choice == 1){ //메뉴 추가
@@ -303,38 +322,36 @@ public class User {
                         String storeName = "";
                         String foodName = "";
                         // 가게 이름 입력 예외 처리
+                        // 가게 이름 입력 예외 처리
                         while (true) {
                             System.out.print("가게 이름 > ");
-                            String inputStoreName = scanner.nextLine();
-                            String trimmedStoreName = inputStoreName.trim();
+                            String inputStoreName = scanner.nextLine(); // 사용자 입력받기
+                            String trimmedStoreName = inputStoreName.trim(); // 공백 제거
 
-                            // 1) 아무것도 안친 경우 (엔터만 누른 경우)
-                            // inputStoreName은 "", trimmedStoreName도 ""이 됨
-                            // 현재 로직과 구분해주기 위해, 완전히 빈 입력에 대한 별도 처리
-                            if (inputStoreName.isEmpty()) {
-                                System.out.println("가게 이름을 입력해주세요.");
-                                continue;
-                            }
-
-                            // 2) 공백만 입력한 경우 ("   " 등)
-                            // inputStoreName은 공백문자로만 이루어져 있고 trim()을 하면 "" 됨
+                            // 1) 입력 값이 공백만 있는 경우
                             if (trimmedStoreName.isEmpty()) {
                                 System.out.println("가게 이름은 공백만으로 이뤄질 수 없습니다. 다시 입력해주세요.");
                                 continue;
                             }
 
-                            // 3) 한글+내부공백 체크
+                            // 2) 앞뒤 공백이 있는 경우
+                            if (!inputStoreName.equals(trimmedStoreName)) {
+                                System.out.println("가게 이름은 앞뒤 공백 없이 입력해야 합니다. 다시 입력해주세요.");
+                                continue;
+                            }
+
+                            // 3) 한글 및 내부 공백 검사
                             if (!trimmedStoreName.matches("^[가-힣]+(?:\\s[가-힣]+)*$")) {
-                                System.out.println("가게 이름은 한글만 입력할 수 있으며 단어 사이에 공백을 허용합니다.");
+                                System.out.println("가게 이름은 한글만 입력할 수 있으며 단어 사이에 공백은 허용됩니다.");
                                 continue;
                             }
 
                             // 4) 존재하는 가게인지 확인
                             if (storeRepository.findStoreName(trimmedStoreName) != null) {
                                 storeName = trimmedStoreName;
-                                break; // 유효한 가게 이름이면 루프 종료
+                                break;
                             } else {
-                                System.out.println("해당 가게가 존재하지 않습니다.");
+                                System.out.println("해당 가게가 존재하지 않습니다. 다시 입력해주세요.");
                             }
                         }
 
@@ -351,7 +368,13 @@ public class User {
                                 continue;
                             }
 
-                            // 2) 한글 및 내부 공백 검사
+                            // 2) 메뉴 이름 앞뒤 공백 체크
+                            if (!foodName.equals(trimmedFoodName)) {
+                                System.out.println("메뉴 이름은 앞에 공백이 없어야 합니다. 다시 입력해주세요.");
+                                continue;
+                            }
+
+                            // 3) 한글 및 내부 공백 검사
                             //    ^[가-힣]+ : 한글 한 글자 이상
                             //    (?:\\s[가-힣]+)* : 공백 후 한글 한 글자 이상 반복
                             //    즉, "김치", "김 치", "김  치"(연속공백도 허용하려면 추가 처리 필요) 모두 허용
@@ -360,7 +383,7 @@ public class User {
                                 continue;
                             }
 
-                            // 3) 중복 메뉴 체크
+                            // 4) 중복 메뉴 체크
                             if (s.isAddFoodToMenu(trimmedFoodName)) {
                                 // 중복되지 않으면 루프 종료
                                 foodName = trimmedFoodName;
@@ -371,15 +394,18 @@ public class User {
                         }
                         while (!validInput) {
                             System.out.print("메뉴 가격 > ");
-                            if (scanner.hasNextInt()) {
-                                foodPrice = scanner.nextInt();
+                            String priceInput = scanner.nextLine().trim();
+                            if (priceInput.matches("\\d+")) {
+                                foodPrice = Integer.parseInt(priceInput);
+                                if (foodPrice < 0 || foodPrice > 100000) {
+                                    System.out.println("가격은 0~100,000 사이여야 합니다.");
+                                    continue;
+                                }
                                 validInput = true;
                             } else {
                                 System.out.println("유효한 가격을 입력하세요.");
-                                scanner.next();
                             }
                         }
-
                             Food newFood = new Food(s,s.getMenuListSize()+1,foodName,foodPrice,0);
                             foodRepository.addFood(storeName,newFood); // 추가된거 목록에 추가
                             s.addFoodToMenu(newFood);
@@ -688,15 +714,6 @@ public class User {
                         } catch (IOException e) {
                             System.err.println("파일 쓰기 중 오류 발생: " + e.getMessage());
                         }
-
-
-
-
-
-
-
-
-
 
 
 

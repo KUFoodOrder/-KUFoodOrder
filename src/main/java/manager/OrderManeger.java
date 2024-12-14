@@ -335,9 +335,6 @@ public class OrderManeger {
         // 좌표 사이의 거리 계산
         double distance = Math.sqrt(Math.pow(userPosition.getX() - storePosition.getX(), 2) +
                 Math.pow(userPosition.getY() - storePosition.getY(), 2));
-        System.out.println(userPosition);
-        System.out.println(store);
-        System.out.println(distance);
         // 거리 기준에 따라 배달 가능 여부 및 배달료 설정
         if (distance <= 1000.0) {  // 1000 이하이면
             System.out.println("배달이 가능합니다.");
