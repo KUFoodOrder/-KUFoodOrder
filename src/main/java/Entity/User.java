@@ -762,7 +762,7 @@ public class User {
 
 
                 default -> {
-                    System.out.println("잘못된 입력입니다. <메뉴, 가격, 위치> 중에서 선택하세요.");
+                    System.out.println("잘못된 입력입니다. <가게, 메뉴, 가격, 위치> 중에서 선택하세요.");
                 }
 
             }
